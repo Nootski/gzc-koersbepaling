@@ -1,0 +1,1278 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Koersbepaling Maatschap</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #F7F5F0;
+  --bg-card: #FFFFFF;
+  --primary: #1B4D4F;
+  --primary-light: #E8F0F0;
+  --accent: #C1694F;
+  --accent-light: #FCEEE8;
+  --text: #1E1E1E;
+  --text-secondary: #5F6368;
+  --border: #E2DFD8;
+  --green: #2D7D46;
+  --green-light: #E8F5EC;
+  --red: #B83D3D;
+  --red-light: #FDE8E8;
+  --yellow: #B88D2D;
+  --yellow-light: #FFF8E1;
+  --radius: 12px;
+  --shadow: 0 2px 12px rgba(0,0,0,0.06);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Inter', -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* JOIN MODAL */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(27,77,79,0.85);
+  z-index: 10000; display: flex; align-items: center; justify-content: center;
+}
+.modal-overlay.hidden { display: none; }
+.modal-box {
+  background: white; border-radius: 20px; padding: 48px; text-align: center;
+  max-width: 440px; width: 90%; box-shadow: 0 24px 64px rgba(0,0,0,0.3);
+}
+.modal-box h1 { font-family: 'Fraunces', serif; font-size: 1.8rem; color: var(--primary); margin-bottom: 8px; }
+.modal-box p { color: var(--text-secondary); margin-bottom: 28px; font-size: 0.92rem; }
+.name-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px;
+}
+.name-btn {
+  padding: 14px; border-radius: 12px; border: 2px solid var(--border);
+  background: white; font-family: 'Inter', sans-serif; font-size: 0.95rem;
+  font-weight: 600; cursor: pointer; transition: all 0.2s;
+  display: flex; align-items: center; gap: 10px; justify-content: center;
+}
+.name-btn:hover { border-color: var(--primary); background: var(--primary-light); }
+.name-btn .dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; }
+
+/* TOP BAR */
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 24px; background: var(--primary); color: white; flex-shrink: 0; z-index: 100;
+}
+.topbar-left { display: flex; align-items: center; gap: 16px; }
+.topbar-title { font-family: 'Fraunces', serif; font-size: 1.05rem; font-weight: 500; }
+.topbar-section { font-size: 0.8rem; opacity: 0.7; }
+.topbar-participants {
+  display: flex; gap: 4px; align-items: center;
+}
+.participant-dot {
+  width: 28px; height: 28px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.4);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.6rem; font-weight: 700; color: white; transition: all 0.3s;
+}
+.participant-dot.online { border-color: white; }
+.participant-dot.offline { opacity: 0.35; }
+.topbar-timer { display: flex; align-items: center; gap: 8px; }
+.timer-display {
+  font-family: 'Fraunces', serif; font-size: 1.8rem; font-weight: 700;
+  min-width: 90px; text-align: center; line-height: 1;
+}
+.timer-display.warning { color: #FFB74D; }
+.timer-display.danger { animation: pulse 1s ease-in-out infinite; color: #FF7043; }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+.timer-btn {
+  background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25);
+  color: white; padding: 5px 10px; border-radius: 6px; font-size: 0.7rem;
+  font-weight: 600; cursor: pointer; transition: background 0.2s;
+}
+.timer-btn:hover { background: rgba(255,255,255,0.25); }
+.timer-btn.active { background: var(--accent); border-color: var(--accent); }
+
+/* PROGRESS BAR */
+.progress-bar { height: 3px; background: rgba(255,255,255,0.15); flex-shrink: 0; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, #81C784, #FFB74D, #FF7043); transition: width 0.3s; }
+
+/* MAIN */
+.main { display: flex; flex: 1; overflow: hidden; }
+
+/* SIDEBAR */
+.sidebar {
+  width: 230px; background: var(--bg-card); border-right: 1px solid var(--border);
+  overflow-y: auto; flex-shrink: 0; padding: 12px 0;
+}
+.sidebar-item {
+  display: flex; align-items: center; gap: 8px; padding: 9px 16px; cursor: pointer;
+  transition: all 0.2s; font-size: 0.78rem; color: var(--text-secondary);
+  border-left: 3px solid transparent;
+}
+.sidebar-item:hover { background: var(--primary-light); color: var(--primary); }
+.sidebar-item.active { background: var(--primary-light); color: var(--primary); font-weight: 600; border-left-color: var(--primary); }
+.sidebar-icon {
+  width: 24px; height: 24px; border-radius: 6px; display: flex; align-items: center;
+  justify-content: center; font-size: 0.8rem; flex-shrink: 0; background: var(--bg);
+}
+.sidebar-item.active .sidebar-icon { background: var(--primary); color: white; }
+.sidebar-time { margin-left: auto; font-size: 0.65rem; opacity: 0.5; white-space: nowrap; }
+
+/* CONTENT */
+.content {
+  flex: 1; overflow-y: auto; padding: 32px 48px; scroll-behavior: smooth;
+}
+.content::-webkit-scrollbar { width: 5px; }
+.content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+.section-badge {
+  display: inline-block; font-size: 0.65rem; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.1em; color: var(--accent); background: var(--accent-light);
+  padding: 3px 10px; border-radius: 20px; margin-bottom: 10px;
+}
+.section-title {
+  font-family: 'Fraunces', serif; font-size: 2rem; font-weight: 700;
+  color: var(--primary); line-height: 1.2; margin-bottom: 6px;
+}
+.section-subtitle {
+  font-size: 0.95rem; color: var(--text-secondary); line-height: 1.6;
+  margin-bottom: 28px; max-width: 620px;
+}
+
+/* CARDS */
+.card {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 24px; margin-bottom: 16px; box-shadow: var(--shadow);
+}
+.card-title {
+  font-family: 'Fraunces', serif; font-size: 1.05rem; font-weight: 600;
+  color: var(--primary); margin-bottom: 14px; display: flex; align-items: center; gap: 8px;
+}
+
+/* SPOOR TOGGLE */
+.spoor-toggle {
+  display: flex; border-radius: 8px; overflow: hidden; border: 2px solid var(--primary); width: fit-content; margin-bottom: 20px;
+}
+.spoor-btn {
+  padding: 8px 20px; border: none; cursor: pointer; font-family: 'Inter', sans-serif;
+  font-size: 0.8rem; font-weight: 600; background: white; color: var(--primary); transition: all 0.2s;
+}
+.spoor-btn.active { background: var(--primary); color: white; }
+.spoor-content { display: none; }
+.spoor-content.active { display: block; }
+
+/* STELLING */
+.stelling {
+  background: var(--bg); border-radius: 10px; padding: 14px 16px; margin-bottom: 10px;
+  display: flex; align-items: center; gap: 14px; font-size: 0.88rem; line-height: 1.5;
+}
+.stelling-text { flex: 1; }
+.vote-btns { display: flex; gap: 3px; flex-shrink: 0; }
+.vote-btn {
+  width: 40px; height: 36px; border-radius: 8px; border: 1px solid var(--border);
+  background: white; cursor: pointer; font-size: 0.85rem; display: flex;
+  flex-direction: column; align-items: center; justify-content: center;
+  transition: all 0.15s; gap: 1px; line-height: 1;
+}
+.vote-btn:hover { transform: scale(1.1); }
+.vote-btn .vote-count { font-size: 0.55rem; font-weight: 700; color: var(--text-secondary); }
+.vote-btn.flash-up { background: var(--green-light); border-color: var(--green); }
+.vote-btn.flash-down { background: var(--red-light); border-color: var(--red); }
+.vote-btn.flash-side { background: var(--yellow-light); border-color: var(--yellow); }
+
+/* STEPS */
+.steps { list-style: none; counter-reset: step; }
+.steps li {
+  counter-increment: step; padding: 8px 0 8px 40px; position: relative;
+  font-size: 0.88rem; line-height: 1.6; border-left: 2px solid var(--border); margin-left: 12px;
+}
+.steps li:last-child { border-left-color: transparent; }
+.steps li::before {
+  content: counter(step); position: absolute; left: -1px; top: 6px;
+  transform: translateX(-50%); width: 24px; height: 24px; background: var(--primary);
+  color: white; border-radius: 50%; font-size: 0.7rem; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* PRINCIPLE BOX */
+.principle-box {
+  background: var(--primary-light); border: 2px dashed var(--primary);
+  border-radius: var(--radius); padding: 16px 20px; margin-top: 14px;
+}
+.principle-box label {
+  display: block; font-size: 0.7rem; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.08em; color: var(--primary); margin-bottom: 6px;
+}
+.principle-input {
+  width: 100%; border: none; background: transparent; font-family: 'Fraunces', serif;
+  font-size: 1rem; color: var(--primary); outline: none; resize: vertical; min-height: 50px; line-height: 1.5;
+}
+.principle-input::placeholder { color: rgba(27,77,79,0.3); }
+
+/* SMART TABLE */
+.smart-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+.smart-table th {
+  background: var(--primary); color: white; padding: 8px 12px; text-align: left;
+  font-weight: 600; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em;
+}
+.smart-table th:first-child { border-radius: 8px 0 0 0; }
+.smart-table th:last-child { border-radius: 0 8px 0 0; }
+.smart-table td { padding: 6px 12px; border-bottom: 1px solid var(--border); }
+.smart-table td input {
+  width: 100%; border: none; background: transparent; font-family: 'Inter', sans-serif;
+  font-size: 0.82rem; padding: 3px 0; outline: none;
+}
+.smart-table td input:focus { background: var(--primary-light); border-radius: 4px; padding: 3px 5px; margin: -3px -5px; }
+.smart-table tr:nth-child(even) td { background: var(--bg); }
+
+/* NAVIGATION */
+.nav-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 24px; background: var(--bg-card); border-top: 1px solid var(--border); flex-shrink: 0;
+}
+.nav-btn {
+  display: flex; align-items: center; gap: 6px; padding: 8px 20px; border-radius: 8px;
+  border: 2px solid var(--primary); background: white; color: var(--primary);
+  font-family: 'Inter', sans-serif; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.2s;
+}
+.nav-btn:hover { background: var(--primary-light); }
+.nav-btn.primary { background: var(--primary); color: white; }
+.nav-btn.primary:hover { background: #164042; }
+.nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+.nav-dots { display: flex; gap: 5px; }
+.nav-dot {
+  width: 7px; height: 7px; border-radius: 50%; background: var(--border); cursor: pointer; transition: all 0.2s;
+}
+.nav-dot.active { background: var(--primary); transform: scale(1.3); }
+
+/* STICKY NOTES */
+.sticky-zone {
+  display: flex; flex-wrap: wrap; gap: 10px; padding: 14px;
+  background: var(--bg); border-radius: var(--radius); min-height: 100px; margin-top: 10px;
+}
+.sticky-note {
+  width: 150px; min-height: 100px; padding: 10px; border-radius: 3px;
+  font-size: 0.75rem; line-height: 1.4; box-shadow: 2px 2px 6px rgba(0,0,0,0.1);
+  position: relative; display: flex; flex-direction: column;
+}
+.sticky-note .sticky-author {
+  font-size: 0.6rem; font-weight: 700; margin-bottom: 4px; opacity: 0.7;
+}
+.sticky-note textarea {
+  width: 100%; flex: 1; min-height: 60px; border: none; background: transparent;
+  font-family: 'Inter', sans-serif; font-size: 0.75rem; resize: none; outline: none; line-height: 1.4;
+}
+.sticky-note .sticky-delete {
+  position: absolute; top: 2px; right: 4px; background: none; border: none;
+  font-size: 0.7rem; cursor: pointer; opacity: 0.3; color: inherit;
+}
+.sticky-note .sticky-delete:hover { opacity: 0.8; }
+.sticky-add {
+  width: 150px; min-height: 100px; border: 2px dashed var(--border); border-radius: 3px;
+  display: flex; align-items: center; justify-content: center; cursor: pointer;
+  font-size: 1.5rem; color: var(--border); transition: all 0.2s;
+}
+.sticky-add:hover { border-color: var(--primary); color: var(--primary); }
+
+/* FLOW STEPS */
+.flow-step {
+  position: relative; padding-left: 40px; margin-bottom: 0;
+}
+.flow-step::before {
+  content: attr(data-step); position: absolute; left: 0; top: 0;
+  width: 30px; height: 30px; border-radius: 50%; background: var(--primary);
+  color: white; font-size: 0.75rem; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+.flow-step.step-done::before { background: var(--green); content: '✓'; }
+.flow-connector {
+  width: 2px; height: 24px; background: var(--border); margin-left: 14px;
+}
+.flow-connector.active { background: var(--primary); }
+.tension-card {
+  background: var(--accent-light); border: 1px solid #E8C4B5; border-radius: var(--radius);
+  padding: 16px 20px; margin-bottom: 10px;
+}
+.tension-card .tension-label {
+  font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--accent); margin-bottom: 6px;
+}
+.principle-split {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+}
+.principle-card {
+  border-radius: var(--radius); padding: 20px; border: 2px dashed;
+}
+.principle-card.org { background: var(--primary-light); border-color: var(--primary); }
+.principle-card.fin { background: var(--yellow-light); border-color: var(--yellow); }
+.principle-card.mw-wg { background: var(--accent-light); border-color: var(--accent); }
+.principle-card.mw-on { background: var(--green-light); border-color: var(--green); }
+.principle-card.kb-int { background: var(--primary-light); border-color: var(--primary); }
+.principle-card.kb-ext { background: var(--accent-light); border-color: var(--accent); }
+.principle-card label {
+  display: block; font-size: 0.7rem; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.08em; margin-bottom: 6px;
+}
+.principle-card.org label { color: var(--primary); }
+.principle-card.fin label { color: var(--yellow); }
+.principle-card.mw-wg label { color: var(--accent); }
+.principle-card.mw-on label { color: var(--green); }
+.principle-card.kb-int label { color: var(--primary); }
+.principle-card.kb-ext label { color: var(--accent); }
+.principle-card textarea {
+  width: 100%; border: none; background: transparent; font-family: 'Fraunces', serif;
+  font-size: 1rem; outline: none; resize: vertical; min-height: 50px; line-height: 1.5;
+}
+.principle-card.org textarea { color: var(--primary); }
+.principle-card.fin textarea { color: #7A6520; }
+.principle-card.mw-wg textarea { color: var(--accent); }
+.principle-card.mw-on textarea { color: var(--green); }
+.principle-card.kb-int textarea { color: var(--primary); }
+.principle-card.kb-ext textarea { color: var(--accent); }
+.mini-smart { width: 100%; border-collapse: collapse; font-size: 0.8rem; margin-top: 10px; }
+.mini-smart th {
+  background: var(--accent); color: white; padding: 7px 10px; text-align: left;
+  font-weight: 600; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.04em;
+}
+.mini-smart th:first-child { border-radius: 6px 0 0 0; }
+.mini-smart th:last-child { border-radius: 0 6px 0 0; }
+.mini-smart td { padding: 5px 10px; border-bottom: 1px solid var(--border); }
+.mini-smart td input {
+  width: 100%; border: none; background: transparent; font-family: 'Inter', sans-serif;
+  font-size: 0.8rem; padding: 2px 0; outline: none;
+}
+.mini-smart td input:focus { background: var(--accent-light); border-radius: 3px; padding: 2px 4px; }
+.vote-hint {
+  display: inline-block; font-size: 0.68rem; color: var(--text-secondary); background: var(--bg);
+  padding: 3px 8px; border-radius: 6px; margin-bottom: 10px;
+}
+
+/* PAUZE */
+.pauze-screen {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  min-height: 50vh; text-align: center;
+}
+.pauze-icon { font-size: 3.5rem; margin-bottom: 20px; }
+.pauze-title { font-family: 'Fraunces', serif; font-size: 2.5rem; font-weight: 700; color: var(--primary); margin-bottom: 10px; }
+.pauze-sub { font-size: 1.1rem; color: var(--text-secondary); }
+
+/* CHECKIN GRID */
+.checkin-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; margin-top: 14px; }
+.checkin-q { background: var(--bg); border-radius: 10px; padding: 16px; }
+.checkin-q .q-num { font-family: 'Fraunces', serif; font-size: 1.3rem; font-weight: 700; color: var(--accent); margin-bottom: 4px; }
+.checkin-q .q-text { font-size: 0.85rem; line-height: 1.5; color: var(--text-secondary); }
+
+/* REMINDER */
+.reminder {
+  display: flex; align-items: flex-start; gap: 10px; padding: 14px 16px;
+  background: var(--yellow-light); border-radius: 10px; border-left: 4px solid var(--yellow);
+  font-size: 0.82rem; line-height: 1.5; margin-bottom: 16px;
+}
+.reminder-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+
+/* OUTCOME BOX */
+.outcome-box {
+  background: var(--green-light); border-radius: 10px; padding: 14px 16px; margin-top: 16px;
+  display: flex; align-items: flex-start; gap: 8px;
+}
+.outcome-box .outcome-icon { font-size: 1rem; flex-shrink: 0; margin-top: 2px; }
+.outcome-box .outcome-text { font-size: 0.84rem; line-height: 1.5; color: var(--green); font-weight: 500; }
+
+/* BEEP OVERLAY */
+.beep-overlay {
+  display: none; position: fixed; inset: 0; background: rgba(193,105,79,0.92);
+  z-index: 9999; flex-direction: column; align-items: center; justify-content: center;
+  color: white; cursor: pointer;
+}
+.beep-overlay.show { display: flex; }
+.beep-overlay .beep-text { font-family: 'Fraunces', serif; font-size: 2.5rem; font-weight: 700; margin-bottom: 10px; }
+.beep-overlay .beep-sub { font-size: 1rem; opacity: 0.8; }
+
+/* LIVE INDICATOR */
+.live-dot {
+  width: 8px; height: 8px; border-radius: 50%; background: #4CAF50; display: inline-block;
+  margin-right: 6px; animation: livePulse 2s ease-in-out infinite;
+}
+@keyframes livePulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+  .sidebar { display: none; }
+  .content { padding: 20px; }
+  .section-title { font-size: 1.6rem; }
+  .timer-display { font-size: 1.4rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- BEEP OVERLAY -->
+<div class="beep-overlay" id="beepOverlay" onclick="dismissBeep()">
+  <div class="beep-text">Tijd is om!</div>
+  <div class="beep-sub">Klik om door te gaan</div>
+</div>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-left">
+    <div>
+      <div class="topbar-title">Koersbepaling Maatschap</div>
+      <div class="topbar-section" id="topbarSection">Welkom</div>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <a href="handout.pdf" target="_blank" class="timer-btn" style="background:rgba(255,255,255,0.15);color:white;text-decoration:none;padding:5px 12px;">🖨 Handout</a>
+  </div>
+  <div class="topbar-timer">
+    <button class="timer-btn" onclick="setTimer(15)">15m</button>
+    <button class="timer-btn" onclick="setTimer(20)">20m</button>
+    <button class="timer-btn" onclick="setTimer(25)">25m</button>
+    <button class="timer-btn" onclick="setTimer(30)">30m</button>
+    <button class="timer-btn" onclick="setTimer(45)">45m</button>
+    <div class="timer-display" id="timerDisplay">--:--</div>
+    <button class="timer-btn" id="timerToggle" onclick="toggleTimer()">Start</button>
+    <button class="timer-btn" onclick="resetTimer()">Reset</button>
+  </div>
+</div>
+<div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="sidebar" id="sidebar"></div>
+  <div class="content" id="content"></div>
+</div>
+
+<!-- NAV BAR -->
+<div class="nav-bar">
+  <button class="nav-btn" id="prevBtn" onclick="navigate(-1)">← Vorige</button>
+  <div class="nav-dots" id="navDots"></div>
+  <button class="nav-btn primary" id="nextBtn" onclick="navigate(1)">Volgende →</button>
+</div>
+
+<script>
+const STICKY_COLORS = {
+  yellow: '#FFF9C4', green: '#C8E6C9', blue: '#BBDEFB',
+  pink: '#F8BBD0', orange: '#FFE0B2', purple: '#E1BEE7'
+};
+
+// ===== STATE (localStorage) =====
+let currentSection = 0;
+let timerSeconds = 0;
+let timerRunning = false;
+let timerInterval = null;
+let timerOriginal = 0;
+let focusedInput = null;
+
+let state = (() => {
+  try {
+    const s = localStorage.getItem('heidedag-state');
+    return s ? JSON.parse(s) : { votes: {}, stickies: {}, texts: {} };
+  } catch(e) { return { votes: {}, stickies: {}, texts: {} }; }
+})();
+
+function save() {
+  localStorage.setItem('heidedag-state', JSON.stringify(state));
+}
+
+// ===== SECTIONS DATA =====
+const sections = [
+{
+  id:'welkom', icon:'🏠', title:'Welkom', time:'13:00–13:15', minutes:15,
+  render: () => `
+    <div class="section-badge">Opening</div>
+    <div class="section-title">Welkom bij de Koersbepaling</div>
+    <div class="section-subtitle">7 maten · 13:00–17:00 · Elk domein: kort of uitgebreid spoor</div>
+    <div class="card">
+      <div class="card-title">📋 Drie afspraken</div>
+      <div class="stelling"><div class="stelling-text"><strong>1. Doen, niet alleen praten</strong><br>Elk domein sluit af met een tastbare uitkomst. Discussie stopt zodra we kunnen besluiten.</div></div>
+      <div class="stelling"><div class="stelling-text"><strong>2. Twee sporen per domein</strong><br>Kort (15 min) of uitgebreid (30 min). Bij tijdnood: altijd kort. Liever 6 domeinen kort dan 3 half.</div></div>
+      <div class="stelling"><div class="stelling-text"><strong>3. Begin bij onszelf</strong><br>De sessie opent met een persoonlijke check-in. Pas als iedereen gehoord is, bouwen we de koers op.</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">⏱ Dagprogramma</div>
+      <table class="smart-table">
+        <tr><th>Tijd</th><th>Onderdeel</th><th>Duur</th></tr>
+        <tr><td>13:00–13:15</td><td>Welkom & binnenkomst</td><td>15 min</td></tr>
+        <tr><td>13:15–13:45</td><td>Check-in (huiswerk)</td><td>30 min</td></tr>
+        <tr><td>13:45–14:15</td><td>Domein 4 — Organisatie</td><td>30 min</td></tr>
+        <tr><td>14:15–14:40</td><td><em>Pauze</em></td><td>25 min</td></tr>
+        <tr><td>14:40–15:10</td><td>Domein 5 — Medewerkers</td><td>30 min</td></tr>
+        <tr><td>15:10–15:40</td><td>Domein 6 — Kansen/bedreigingen</td><td>30 min</td></tr>
+        <tr><td>15:40–16:25</td><td>Synthese & actiepunten</td><td>45 min</td></tr>
+        <tr><td>16:25–16:40</td><td>Feedbackafspraken</td><td>15 min</td></tr>
+        <tr><td>16:40–16:55</td><td>Afsluiting</td><td>15 min</td></tr>
+        <tr style="color:var(--text-secondary);font-style:italic;"><td></td><td>Reserve: Identiteit · Patiënten · Zorginhoud</td><td>optioneel</td></tr>
+      </table>
+    </div>
+    <div class="reminder"><span class="reminder-icon">📱</span><div>Telefoons op stil. Eén device in het midden voor audio-opname.</div></div>
+`
+},
+{
+  id:'checkin', icon:'💬', title:'Check-in', time:'13:15–13:45', minutes:30,
+  render: () => `
+    <div class="section-badge">Opening</div>
+    <div class="section-title">Persoonlijke Check-in</div>
+    <div class="section-subtitle">Max. 3 minuten per persoon. De rest luistert — geen discussie, wel kort doorvragen.</div>
+    <div class="card">
+      <div class="card-title">📝 De vijf vragen</div>
+      <div class="checkin-grid">
+        <div class="checkin-q"><div class="q-num">1</div><div class="q-text">Hoe zit jij er nu in — wat geeft je energie?</div></div>
+        <div class="checkin-q"><div class="q-num">2</div><div class="q-text">Wat is voor jou een energie-drain?</div></div>
+        <div class="checkin-q"><div class="q-num">3</div><div class="q-text">Wat heb jij van de maatschap nodig?</div></div>
+        <div class="checkin-q"><div class="q-num">4</div><div class="q-text">Hoe ziet jouw ideale werkdag eruit?</div></div>
+        <div class="checkin-q"><div class="q-num">5</div><div class="q-text">Wat zou je de maatschap willen vragen dat je nu nog niet vraagt?</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">🔖 Terugkerende thema's — plak je sticky notes</div>
+      ${stickyZone('checkin-themes', 'yellow')}
+    </div>
+    ${outcomeBox('Gedeeld beeld van waar iedereen staat — basis voor de rest van de dag')}`
+},
+{
+  id:'organisatie', icon:'⚙️', title:'Organisatie', time:'13:45–14:15', minutes:30,
+  render: () => `
+    <div class="section-badge">Domein 4</div>
+    <div class="section-title">Organisatie & processen</div>
+    <div class="section-subtitle">Van triage tot ICT, kwaliteit tot veiligheid. En: de financiële koers.</div>
+
+    <div class="card">
+
+      <!-- STAP 1 -->
+      <div class="flow-step" data-step="1">
+        <div class="card-title" style="margin-bottom:4px;">Stem: hoe werken wij eigenlijk?</div>
+        <div class="vote-hint">Wees eerlijk, niet beleefd. Deze stellingen zijn bewust scherp geformuleerd om het gesprek open te breken.</div>
+      </div>
+      <div style="padding-left:40px;">
+        ${stelling('o-l1', 'Wij zijn een reactieve praktijk — we blussen brandjes in plaats van ze te voorkomen.')}
+        ${stelling('o-l2', 'Onze pragmatische aanpak werkt prima — we hoeven geen groot plan om goede zorg te leveren.')}
+        ${stelling('o-l3', 'We bezuinigen op plekken waar we eigenlijk zouden moeten investeren.')}
+        ${stelling('o-l4', 'Met slimmere IT-keuzes zouden we merkbaar meer tijd overhouden voor de patiënt.')}
+        ${stelling('o-l5', 'Er zit meer werkplezier in deze praktijk dan we er nu uithalen.')}
+        ${stelling('o-l6', 'Als we nu de juiste organisatorische keuzes maken, kunnen we over twee jaar een wezenlijk betere praktijk zijn.')}
+        ${stelling('o-l7', 'We zijn duurzaam, maar het mag geen geld kosten.')}
+        ${stelling('o-l8', 'Onze dagstructuur klopt.')}
+      </div>
+
+      <div class="flow-connector active"></div>
+
+      <!-- STAP 2 -->
+      <div class="flow-step" data-step="2">
+        <div class="card-title" style="margin-bottom:4px;">Waar zit de spanning?</div>
+        <p style="font-size:0.82rem;color:var(--text-secondary);">Bekijk de stemresultaten. Waar lopen de meningen het meest uiteen? En waar zijn jullie het juist roerend eens? Plak een sticky per spanningspunt.</p>
+      </div>
+      <div style="padding-left:40px;">
+        ${stickyZone('org-spanningen-l', 'orange')}
+      </div>
+
+      <div class="flow-connector active"></div>
+
+      <!-- STAP 3 -->
+      <div class="flow-step" data-step="3">
+        <div class="card-title" style="margin-bottom:4px;">Van spanning → verbeterpunt</div>
+        <p style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:8px;">Kies de 2–3 belangrijkste spanningspunten. Maak ze concreet: wie pakt het op, wanneer klaar?</p>
+      </div>
+      <div style="padding-left:40px;">
+        <table class="mini-smart">
+          <tr><th style="width:35%">Verbeterpunt</th><th style="width:25%">Eigenaar</th><th style="width:20%">Deadline</th><th style="width:20%">Hoe meten?</th></tr>
+          <tr><td><input type="text" placeholder="bijv. Regie-arts structuur invoeren" data-sync="org-vp-1"></td><td><input type="text" placeholder="..." data-sync="org-vp-eig-1"></td><td><input type="text" placeholder="..." data-sync="org-vp-dl-1"></td><td><input type="text" placeholder="..." data-sync="org-vp-meet-1"></td></tr>
+          <tr><td><input type="text" placeholder="bijv. AI-tools evalueren" data-sync="org-vp-2"></td><td><input type="text" placeholder="..." data-sync="org-vp-eig-2"></td><td><input type="text" placeholder="..." data-sync="org-vp-dl-2"></td><td><input type="text" placeholder="..." data-sync="org-vp-meet-2"></td></tr>
+          <tr><td><input type="text" placeholder="bijv. Incidentbespreking maandelijks" data-sync="org-vp-3"></td><td><input type="text" placeholder="..." data-sync="org-vp-eig-3"></td><td><input type="text" placeholder="..." data-sync="org-vp-dl-3"></td><td><input type="text" placeholder="..." data-sync="org-vp-meet-3"></td></tr>
+        </table>
+      </div>
+
+      <div class="flow-connector active"></div>
+
+      <!-- STAP 4 -->
+      <div class="flow-step" data-step="4">
+        <div class="card-title" style="margin-bottom:4px;">Destilleer de principes</div>
+        <p style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:12px;">Welk overkoepelend principe vloeit voort uit de stemmen, de discussie en de verbeterpunten? Één voor organisatie, één voor financiën.</p>
+      </div>
+      <div style="padding-left:40px;">
+        <div class="principle-split">
+          <div class="principle-card org">
+            <label>⚙️ Organisatieprincipe</label>
+            <textarea placeholder="bijv. &quot;Wij organiseren zo dat elke arts structureel rust heeft — via regie-arts, goede triage en slim gebruik van digitale tools.&quot;" data-sync="principle-org-org-l" oninput="onTextInput(this)" onfocus="focusedInput=this.dataset.sync" onblur="focusedInput=null;flushText(this)"></textarea>
+          </div>
+          <div class="principle-card fin">
+            <label>💰 Financieel principe</label>
+            <textarea placeholder="bijv. &quot;Wij investeren in wat direct bijdraagt aan de kwaliteit van zorg en het werkplezier van ons team.&quot;" data-sync="principle-org-fin-l" oninput="onTextInput(this)" onfocus="focusedInput=this.dataset.sync" onblur="focusedInput=null;flushText(this)"></textarea>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="reminder" style="margin-top:16px;">
+      <span class="reminder-icon">💡</span>
+      <div><strong>Tip:</strong> een goed principe begint met "Wij..." en beschrijft gedrag dat je kunt toetsen. Niet "we vinden kwaliteit belangrijk" maar "wij bespreken elk incident binnen een week in het team".</div>
+    </div>
+
+    ${outcomeBox('2–3 verbeterpunten met eigenaar + één organisatieprincipe + één financieel principe')}`
+},
+{
+  id:'pauze', icon:'☕', title:'Pauze', time:'14:15–14:40', minutes:25,
+  render: () => `<div class="pauze-screen"><div class="pauze-icon">☕</div><div class="pauze-title">Pauze</div><div class="pauze-sub">14:15–14:40 · 25 minuten — even naar buiten, bewegen, koffie</div></div>`
+},
+{
+  id:'medewerkers', icon:'👥', title:'Medewerkers', time:'14:40–15:10', minutes:30,
+  render: () => `
+    <div class="section-badge">Domein 5</div>
+    <div class="section-title">Medewerkers</div>
+    <div class="section-subtitle">Wat voor werkgever willen we zijn? Visie en cultuur, niet individuele personen.</div>
+    <div class="card">
+
+      <!-- STAP 1 -->
+      <div class="flow-step" data-step="1">
+        <div class="card-title" style="margin-bottom:4px;">Individueel nadenken (5 min)</div>
+        <p style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:10px;">Lees de vragen in stilte. Plak per vraag een sticky met jouw kernantwoord. Geen discussie — eerst nadenken.</p>
+      </div>
+      <div style="padding-left:40px;">
+        <div style="background:var(--bg);border-radius:10px;padding:14px 16px;margin-bottom:10px;">
+          <ul style="list-style:none;padding:0;font-size:0.85rem;line-height:2;">
+            <li><strong>1.</strong> Wat voor werkgever willen we zijn — en is dat ook hoe onze medewerkers ons ervaren?</li>
+            <li><strong>2.</strong> Geven wij medewerkers voldoende ruimte en vertrouwen om eigenaarschap te nemen — en durven zij dat ook te pakken?</li>
+            <li><strong>3.</strong> Hoe houden we ons team scherp en geïnspireerd — door nascholing, teambuilding, extra beloning, of iets anders?</li>
+            <li><strong>4.</strong> Streven wij naar een team waar verschillende mensen zich thuis voelen, of zoeken we juist gelijkgestemden?</li>
+            <li><strong>5.</strong> Hoe herkennen we op tijd dat iemand niet op de juiste plek zit — en wat doen we dan?</li>
+          </ul>
+        </div>
+        ${stickyZone('mw-lang', 'orange')}
+      </div>
+
+      <div class="flow-connector active"></div>
+
+      <!-- STAP 2 -->
+      <div class="flow-step" data-step="2">
+        <div class="card-title" style="margin-bottom:4px;">Scan & selecteer (3 min)</div>
+        <p style="font-size:0.82rem;color:var(--text-secondary);">Lees alle stickies. Waar zijn jullie het eens? Parkeer die. Kies de <strong>2 vragen</strong> waar de meeste spanning zit.</p>
+      </div>
+
+      <div class="flow-connector active"></div>
+
+      <!-- STAP 3 -->
+      <div class="flow-step" data-step="3">
+        <div class="card-title" style="margin-bottom:4px;">Diepte op 2 vragen (15 min)</div>
+        <p style="font-size:0.82rem;color:var(--text-secondary);">Bespreek alleen de 2 vragen waar het schuurt. Doel: tot een principe komen per vraag.</p>
+      </div>
+
+      <div class="flow-connector active"></div>
+
+      <!-- STAP 4 -->
+      <div class="flow-step" data-step="4">
+        <div class="card-title" style="margin-bottom:4px;">Principes invullen (7 min)</div>
+        <p style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:12px;">Vat samen: wat geven wij als werkgever, en wat verwachten wij terug?</p>
+      </div>
+
+    </div>
+    <div class="card">
+      <div class="card-title">📝 Formuleer de principes</div>
+      <div class="principle-split">
+        <div class="principle-card mw-wg">
+          <label>👥 Wij geven</label>
+          <textarea placeholder="Wij bieden onze medewerkers..." data-sync="principle-mw-wg" oninput="onTextInput(this)" onfocus="focusedInput=this.dataset.sync" onblur="focusedInput=null;flushText(this)"></textarea>
+        </div>
+        <div class="principle-card mw-on">
+          <label>🎯 Wij verwachten</label>
+          <textarea placeholder="Van onze medewerkers verwachten wij..." data-sync="principle-mw-on" oninput="onTextInput(this)" onfocus="focusedInput=this.dataset.sync" onblur="focusedInput=null;flushText(this)"></textarea>
+        </div>
+      </div>
+    </div>
+    ${outcomeBox('Één principe over wat wij geven + één principe over wat wij verwachten')}`
+},
+{
+  id:'kansen', icon:'🔭', title:'Kansen & bedreigingen', time:'15:10–15:40', minutes:30,
+  render: () => `
+    <div class="section-badge">Domein 6</div>
+    <div class="section-title">Kansen & bedreigingen</div>
+    <div class="section-subtitle">Welke externe én interne ontwikkelingen raken ons — in de samenleving, de zorg én binnen onze eigen maatschap?</div>
+    <div class="card">
+      <ol class="steps">
+        <li><strong>Post-its (8 min):</strong> groen = kans, roze = bedreiging — apart voor intern en extern</li>
+        <li><strong>Clusteren (8 min)</strong></li>
+        <li><strong>Bespreking (10 min):</strong> top 2 + top 2 per categorie. Wat vraagt dit van onze koers?</li>
+      </ol>
+
+      <p style="font-size:0.78rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--primary);margin:18px 0 8px;">🏠 Intern — binnen de maatschap & praktijk</p>
+      <div class="reminder" style="margin-bottom:10px;"><span class="reminder-icon">💡</span><div><strong>Denk aan:</strong> samenwerking maten, taakverdeling, werkdruk, cultuur, opvolging, ICT-volwassenheid, financiële ruimte.</div></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <div><strong style="font-size:0.75rem;color:var(--green);">🟢 Kansen</strong>${stickyZone('k2-int-kansen', 'green')}</div>
+        <div><strong style="font-size:0.75rem;color:var(--red);">🔴 Bedreigingen</strong>${stickyZone('k2-int-bedreig', 'pink')}</div>
+      </div>
+
+      <p style="font-size:0.78rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--primary);margin:18px 0 8px;">🌍 Extern — zorg, samenleving & maatschappelijke ontwikkelingen</p>
+      <div class="reminder" style="margin-bottom:10px;"><span class="reminder-icon">💡</span><div><strong>Denk aan:</strong> AI, leefstijlgeneeskunde, samenwerking welzijn, wijkfinanciering, taakdelegatie VS/POH, onze rol in de stad — maar ook: huisartsentekort, ANW-beleid, vergrijzing, bureaucratie, kosten.</div></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <div><strong style="font-size:0.75rem;color:var(--green);">🟢 Kansen</strong>${stickyZone('k2-ext-kansen', 'green')}</div>
+        <div><strong style="font-size:0.75rem;color:var(--red);">🔴 Bedreigingen</strong>${stickyZone('k2-ext-bedreig', 'pink')}</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">📝 Formuleer de principes</div>
+      <p style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:12px;">Wat is het overkoepelende principe per categorie?</p>
+      <div class="principle-split">
+        <div class="principle-card kb-int">
+          <label>🏠 Intern principe</label>
+          <textarea placeholder="Binnen onze maatschap pakken wij kansen door..." data-sync="principle-kb-int" oninput="onTextInput(this)" onfocus="focusedInput=this.dataset.sync" onblur="focusedInput=null;flushText(this)"></textarea>
+        </div>
+        <div class="principle-card kb-ext">
+          <label>🌍 Extern principe</label>
+          <textarea placeholder="Op externe ontwikkelingen reageren wij door..." data-sync="principle-kb-ext" oninput="onTextInput(this)" onfocus="focusedInput=this.dataset.sync" onblur="focusedInput=null;flushText(this)"></textarea>
+        </div>
+      </div>
+    </div>
+    ${outcomeBox('Één intern principe + één extern principe voor het wegen van kansen en bedreigingen')}`
+},
+{
+  id:'synthese', icon:'🎯', title:'Synthese', time:'15:40–16:25', minutes:45,
+  render: () => `
+    <div class="section-badge">Kern van de dag</div>
+    <div class="section-title">Synthese</div>
+    <div class="section-subtitle">Principes samenvoegen, taakverdeling, SMART-actiepunten.</div>
+    <div class="card">
+      <div class="card-title">📌 Stap 1 — Principes (10 min)</div>
+      <p style="font-size:0.85rem;line-height:1.6;margin-bottom:14px;">Streef naar <strong>6–8 principes</strong>. Check: concreet? Draagvlak? Nuttig voor nieuwe medewerker?</p>
+      ${principleBox('synthese-principes', 'Alle principes (6–8 stuks)')}
+    </div>
+    <div class="card">
+      <div class="card-title">📋 Stap 2 — Taakverdeling (10 min)</div>
+      ${stickyZone('synthese-taken', 'yellow')}
+    </div>
+    <div class="card">
+      <div class="card-title">🎯 Stap 3 — SMART-actiepunten (15 min)</div>
+      <table class="smart-table">
+        <tr><th>#</th><th>Actiepunt</th><th>Eigenaar</th><th>Deadline</th><th>Hoe meten?</th></tr>
+        ${[1,2,3,4,5,6,7,8].map(i => `<tr><td>${i}</td><td><input type="text" placeholder="..." data-sync="smart-actie-${i}"></td><td><input type="text" placeholder="..." data-sync="smart-eig-${i}"></td><td><input type="text" placeholder="..." data-sync="smart-dl-${i}"></td><td><input type="text" placeholder="..." data-sync="smart-meet-${i}"></td></tr>`).join('')}
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-title">🔄 Stap 4 — Verbetercyclus (10 min)</div>
+      <div class="reminder"><span class="reminder-icon">📅</span><div>Spreek <strong>nu</strong> een evaluatiemoment af (2–3 maanden). Wijs een <strong>bewaker</strong> aan.</div></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <div class="principle-box"><label>Datum evaluatie</label><input type="text" class="principle-input" style="min-height:28px;" placeholder="bijv. dinsdag 16 juni, 12:30" data-sync="eval-datum"></div>
+        <div class="principle-box"><label>Bewaker</label><input type="text" class="principle-input" style="min-height:28px;" placeholder="Naam..." data-sync="eval-bewaker"></div>
+      </div>
+    </div>
+    ${outcomeBox('6–8 principes + taakverdeling + SMART-actiepunten + evaluatiedatum')}`
+},
+{
+  id:'feedback', icon:'🔁', title:'Feedback', time:'16:25–16:40', minutes:15,
+  render: () => `
+    <div class="section-badge">Afronding</div>
+    <div class="section-title">Feedbackafspraken</div>
+    <div class="section-subtitle">Veilig feedback geven is een voorwaarde voor alles wat jullie afspraken.</div>
+    <div class="card">
+      <div class="card-title">💬 Bespreek</div>
+      <ul style="list-style:disc;padding-left:18px;font-size:0.9rem;line-height:2;">
+        <li>Op een vast moment of zodra iets speelt?</li>
+        <li>Hoe vaak? Voorstel: jaarlijks bilateraal</li>
+        <li>Wie initieert?</li>
+        <li>Wat als feedback niet landt?</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-title">🛠 SBI-model</div>
+      <div style="font-size:0.88rem;line-height:1.7;">
+        <strong>S</strong>ituatie – <strong>B</strong>edrag – <strong>I</strong>mpact<br>
+        <div style="background:var(--bg);padding:14px;border-radius:8px;font-style:italic;margin:10px 0;">
+          "Tijdens het overleg viel je me tweemaal in de rede. Ik voelde me niet gehoord. Hoe zag jij dat?"
+        </div>
+        Eindig altijd met een vraag.
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">📝 Onze feedbackafspraken</div>
+      ${stickyZone('feedback-afspraken', 'yellow')}
+      ${principleBox('feedback-principle', 'Feedbackafspraken (min. 2)')}
+    </div>
+    ${outcomeBox('Minimaal 2 concrete feedbackafspraken')}`
+},
+{
+  id:'afsluiting', icon:'✨', title:'Afsluiting', time:'16:40–16:55', minutes:15,
+  render: () => `
+    <div class="section-badge">Afsluiting</div>
+    <div class="section-title">Check-out</div>
+    <div class="section-subtitle">Wat neem jij mee — en wat ga jij de komende week anders doen?</div>
+    <div class="card">
+      <div class="card-title">🗣 Plak je antwoord als sticky note</div>
+      ${stickyZone('checkout', 'yellow')}
+    </div>
+    <div class="reminder"><span class="reminder-icon">📝</span><div><strong>Direct vastleggen.</strong> Afspraken die niet opgeschreven worden, bestaan niet.</div></div>
+    <div class="reminder"><span class="reminder-icon">📅</span><div><strong>Nu in de agenda:</strong> evaluatiemoment + vervolgafspraken.</div></div>
+    <div class="card">
+      <div class="card-title">📄 Exporteren</div>
+      <p style="font-size:0.85rem;margin-bottom:14px;">Kopieer alle ingevulde principes en actiepunten.</p>
+      <button class="timer-btn" style="background:var(--primary);color:white;padding:10px 20px;font-size:0.85rem;border-radius:8px;" onclick="exportAll()">📋 Kopieer uitkomsten</button>
+      <pre id="exportOutput" style="margin-top:14px;background:var(--bg);padding:16px;border-radius:8px;font-size:0.75rem;line-height:1.5;white-space:pre-wrap;display:none;max-height:350px;overflow-y:auto;"></pre>
+    </div>`
+},
+{
+  id:'identiteit', icon:'🧭', title:'Identiteit', time:'15–30 min', minutes:15,
+  render: () => `
+    <div class="section-badge" style="background:var(--yellow-light);color:var(--yellow);">Reserve-domein 1</div>
+    <div class="section-title">Identiteit</div>
+    <div class="section-subtitle">Wie zijn wij, wat maakt ons onderscheidend, hoe verhouden we ons tot de stad?</div>
+    <div class="reminder"><span class="reminder-icon">💡</span><div>Dit domein staat achteraan als reserve. Spring hier alleen naartoe als de groep besluit het te behandelen.</div></div>
+    <div class="reminder"><span class="reminder-icon">📄</span><div><strong>Huidige missie:</strong> laagdrempelige diagnostische, therapeutische en preventieve zorg — op maat, op afstand waar het kan, persoonlijk als het nodig is.<br><strong>Huidige visie:</strong> integrale, persoonsgerichte en continue zorg. Ruimte voor innovatie. Werkplezier als voorwaarde.</div></div>
+    ${spoorToggle('identiteit', `
+      <ol class="steps">
+        <li>Ieder plakt een sticky met <strong>één woord</strong> dat jullie praktijk het best omschrijft</li>
+        <li>Kies samen de <strong>3 woorden</strong> die het meest resoneren</li>
+      </ol>
+      ${stickyZone('id-woorden', 'blue')}
+    `, `
+      <ol class="steps">
+        <li><strong>Post-its (8 min):</strong> ieder schrijft twee stickies: "Wij zijn een praktijk die..." en "Onze rol in Utrecht is..."</li>
+        <li><strong>Clusteren (10 min):</strong> sleep de stickies samen</li>
+        <li><strong>Missiezin formuleren (10 min):</strong> schrijf samen 1–2 zinnen</li>
+      </ol>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px;">
+        <div><strong style="font-size:0.75rem;color:var(--text-secondary);">"Wij zijn een praktijk die..."</strong>${stickyZone('id-praktijk', 'green')}</div>
+        <div><strong style="font-size:0.75rem;color:var(--text-secondary);">"Onze rol in Utrecht is..."</strong>${stickyZone('id-rol', 'blue')}</div>
+      </div>
+    `)}
+    <div class="card">${principleBox('id-principle', '3–5 kernwaarden + missiezin')}</div>
+    ${outcomeBox('3–5 kernwaarden + een missiezin als kompas voor de rest van de dag')}`
+},
+{
+  id:'patienten', icon:'🤝', title:'Patiënten', time:'15–30 min', minutes:15,
+  render: () => `
+    <div class="section-badge" style="background:var(--yellow-light);color:var(--yellow);">Reserve-domein 2</div>
+    <div class="section-title">Patiënten</div>
+    <div class="section-subtitle">Hoe kijken we naar en gaan we om met onze patiënten?</div>
+    <div class="reminder"><span class="reminder-icon">💡</span><div>Dit domein staat achteraan als reserve. Spring hier alleen naartoe als de groep besluit het te behandelen.</div></div>
+    ${spoorToggle('patienten', `
+      <p style="margin-bottom:12px;font-size:0.85rem;">Stem op de stellingen:</p>
+      ${stelling('pat-s1', 'Wij zijn primair empowerend — we sturen op eigen regie.')}
+      ${stelling('pat-s2', 'Onze praktijk is toegankelijk genoeg voor kwetsbare patiënten.')}
+      <p style="margin-top:14px;font-size:0.85rem;">Formuleer samen <strong>één patiëntprincipe</strong>.</p>
+    `, `
+      <div class="card" style="margin-bottom:14px;box-shadow:none;border:1px solid var(--border);">
+        <div class="card-title">💬 Reflectievragen (15 min)</div>
+        <ul style="list-style:disc;padding-left:18px;font-size:0.85rem;line-height:1.8;">
+          <li>Bejegening: empowerend, ontzorgend, of situationeel?</li>
+          <li>Toegankelijk voor lagere gezondheidsvaardigheden?</li>
+          <li>Hoe om met ver-weg-patiënten en wisselaars?</li>
+          <li>Verwachtingen qua bereikbaarheid?</li>
+        </ul>
+      </div>
+      ${stelling('pat-s1b', 'Wij zijn primair empowerend — we sturen op eigen regie.')}
+      ${stelling('pat-s2b', 'Onze praktijk is voldoende toegankelijk voor kwetsbare en laaggeletterde patiënten.')}
+      ${stelling('pat-s3b', 'We zeggen consequent nee als zorg niet bij ons hoort — eenduidig.')}
+      ${stelling('pat-s4b', 'Patiënten weten wat ze van ons kunnen verwachten qua bereikbaarheid.')}
+    `)}
+    <div class="card">${principleBox('pat-principle', 'Patiëntprincipe(s)')}</div>
+    ${outcomeBox('1–2 principes over hoe wij omgaan met patiënten')}`
+},
+{
+  id:'zorginhoud', icon:'🩺', title:'Zorginhoud', time:'15–30 min', minutes:15,
+  render: () => `
+    <div class="section-badge" style="background:var(--yellow-light);color:var(--yellow);">Reserve-domein 3</div>
+    <div class="section-title">Zorginhoud — wat doen we wel, wat niet?</div>
+    <div class="section-subtitle">Er komt steeds meer zorg onze kant op. Hoe prioriteren we?</div>
+    <div class="reminder"><span class="reminder-icon">💡</span><div>Dit domein staat achteraan als reserve. Spring hier alleen naartoe als de groep besluit het te behandelen.</div></div>
+    <div class="reminder"><span class="reminder-icon">🏥</span><div><strong>Het probleem:</strong> Substitutie vanuit het ziekenhuis, nieuwe maatschappelijke vragen (preventie, abortuszorg), zorgvormen die de POH leuk vindt (obesitas, kleine kwalen) — het komt allemaal samen in de praktijk. Hoe zeggen we slim ja en bewust nee?</div></div>
+
+    ${spoorToggle('zorginhoud', `
+
+      <!-- KORT SPOOR -->
+      <div class="flow-step" data-step="1">
+        <div class="card-title" style="margin-bottom:4px;">Stem op de stellingen</div>
+        <div class="vote-hint">Wees eerlijk — er zijn geen foute antwoorden.</div>
+      </div>
+      <div style="padding-left:40px;">
+        ${stelling('z-s1', 'Wij zeggen te vaak ja tegen zorg die eigenlijk niet bij ons hoort.')}
+        ${stelling('z-s2', 'Substitutie vanuit het ziekenhuis accepteren we te makkelijk — zonder goede afspraken over financiering en scholing.')}
+        ${stelling('z-s3', 'We moeten ruimte maken voor zorg die de POH/assistent leuk vindt en goed kan — dat levert werkplezier én kwaliteit op.')}
+        ${stelling('z-s4', 'We hebben geen helder criterium om te bepalen of we iets wel of niet oppakken.')}
+      </div>
+
+      <div class="flow-connector active"></div>
+
+      <div class="flow-step" data-step="2">
+        <div class="card-title" style="margin-bottom:4px;">Sorteer: wat hoort waar?</div>
+        <p style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:12px;">Plak per zorgvorm een sticky in de juiste kolom. Denk aan: substitutiezorg, preventie, PREP, obesitas, GGZ-light, palliatief, leefstijl, kwetsbare ouderen, kleine kwalen.</p>
+      </div>
+      <div style="padding-left:40px;display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div><strong style="font-size:0.72rem;color:var(--green);text-transform:uppercase;letter-spacing:0.05em;">✅ Kernzorg — dit is van ons</strong>${stickyZone('z-kern', 'green')}</div>
+        <div><strong style="font-size:0.72rem;color:var(--yellow);text-transform:uppercase;letter-spacing:0.05em;">⚠️ Ja, mits — voorwaardelijk</strong>${stickyZone('z-mits', 'yellow')}</div>
+        <div><strong style="font-size:0.72rem;color:var(--accent);text-transform:uppercase;letter-spacing:0.05em;">❤️ Omdat we het leuk vinden</strong>${stickyZone('z-leuk', 'orange')}</div>
+        <div><strong style="font-size:0.72rem;color:var(--red);text-transform:uppercase;letter-spacing:0.05em;">🚫 Bewust niet</strong>${stickyZone('z-niet', 'pink')}</div>
+      </div>
+
+    `, `
+
+      <!-- UITGEBREID SPOOR: STAP 1 -->
+      <div class="flow-step" data-step="1">
+        <div class="card-title" style="margin-bottom:4px;">Stem: hoe gaan we om met binnenkomende zorg?</div>
+        <div class="vote-hint">Wees eerlijk — er zijn geen foute antwoorden.</div>
+      </div>
+      <div style="padding-left:40px;">
+        ${stelling('z-l1', 'Wij zeggen te vaak ja tegen zorg die eigenlijk niet bij ons hoort.')}
+        ${stelling('z-l2', 'Substitutie vanuit het ziekenhuis accepteren we te makkelijk — zonder goede afspraken over financiering en scholing.')}
+        ${stelling('z-l3', 'We moeten ruimte maken voor zorg die de POH/assistent leuk vindt en goed kan — dat levert werkplezier én kwaliteit op.')}
+        ${stelling('z-l4', 'We hebben geen helder criterium om te bepalen of we iets wel of niet oppakken.')}
+        ${stelling('z-l5', 'Preventie klinkt mooi, maar we doen er in de praktijk te weinig mee om het serieus te noemen.')}
+        ${stelling('z-l6', 'We zijn onderling niet eenduidig in wat we wel en niet doen — de ene arts pakt dingen op die de ander terugverwijst.')}
+      </div>
+
+      <div class="flow-connector active"></div>
+
+      <!-- UITGEBREID SPOOR: STAP 2 -->
+      <div class="flow-step" data-step="2">
+        <div class="card-title" style="margin-bottom:4px;">Toetsingscriteria</div>
+        <p style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:8px;">Voordat we ja zeggen tegen nieuwe zorg, toetsen we aan:</p>
+      </div>
+      <div style="padding-left:40px;" class="card" style="box-shadow:none;border:1px solid var(--border);">
+        <ol style="list-style:decimal;padding-left:18px;font-size:0.85rem;line-height:2;">
+          <li><strong>Missie</strong> — past het bij wie wij willen zijn?</li>
+          <li><strong>Competenties</strong> — kunnen wij dit, of kunnen we het realistisch leren?</li>
+          <li><strong>Financiering</strong> — is het betaald, of worden we er armer van?</li>
+          <li><strong>Capaciteit</strong> — past het erbij zonder dat de rest lijdt?</li>
+          <li><strong>Werkplezier</strong> — vindt iemand het leuk en wil die het trekken?</li>
+        </ol>
+      </div>
+
+      <div class="flow-connector active"></div>
+
+      <!-- UITGEBREID SPOOR: STAP 3 -->
+      <div class="flow-step" data-step="3">
+        <div class="card-title" style="margin-bottom:4px;">Sorteer: zorgportfolio</div>
+        <p style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:12px;">Plak per zorgvorm een sticky in de juiste kolom. Denk aan: substitutiezorg, preventie, PREP, obesitas, GGZ-light, palliatief, leefstijl, kwetsbare ouderen, kleine kwalen, abortuszorg.</p>
+      </div>
+      <div style="padding-left:40px;display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div><strong style="font-size:0.72rem;color:var(--green);text-transform:uppercase;letter-spacing:0.05em;">✅ Kernzorg — dit is van ons</strong>${stickyZone('z2-kern', 'green')}</div>
+        <div><strong style="font-size:0.72rem;color:var(--yellow);text-transform:uppercase;letter-spacing:0.05em;">⚠️ Ja, mits — voorwaardelijk</strong>${stickyZone('z2-mits', 'yellow')}</div>
+        <div><strong style="font-size:0.72rem;color:var(--accent);text-transform:uppercase;letter-spacing:0.05em;">❤️ Omdat we het leuk vinden</strong>${stickyZone('z2-leuk', 'orange')}</div>
+        <div><strong style="font-size:0.72rem;color:var(--red);text-transform:uppercase;letter-spacing:0.05em;">🚫 Bewust niet</strong>${stickyZone('z2-niet', 'pink')}</div>
+      </div>
+
+      <div class="flow-connector active"></div>
+
+      <!-- UITGEBREID SPOOR: STAP 4 -->
+      <div class="flow-step" data-step="4">
+        <div class="card-title" style="margin-bottom:4px;">Substitutie-afspraak</div>
+        <p style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:8px;">Wat is ons protocol als het ziekenhuis weer iets over de schutting gooit?</p>
+      </div>
+      <div style="padding-left:40px;">
+        ${stickyZone('z-substitutie', 'blue')}
+      </div>
+
+    `)}
+
+    <div class="card">${principleBox('zorg-principle', 'Zorginhoud-principes: wat doen we wel, wat niet, en waarom')}</div>
+    <div class="reminder" style="margin-top:16px;">
+      <span class="reminder-icon">💡</span>
+      <div><strong>Tip:</strong> "Omdat we het leuk vinden" is een legitieme reden — zolang je er eerlijk over bent. Het wordt pas een probleem als het ten koste gaat van kernzorg of als niemand het bewust heeft besloten.</div>
+    </div>
+    ${outcomeBox('Zorgportfolio met 4 kolommen + toetsingscriteria + substitutie-protocol')}`
+}
+];
+
+// ===== HELPERS =====
+function stickyZone(zoneId, defaultColor) {
+  return `<div class="sticky-zone" id="zone-${zoneId}" data-zone="${zoneId}" data-color="${STICKY_COLORS[defaultColor] || STICKY_COLORS.yellow}">
+    <div class="sticky-add" onclick="addSticky('${zoneId}')">+</div>
+  </div>`;
+}
+
+function stelling(id, text) {
+  return `<div class="stelling" id="stelling-${id}">
+    <div class="stelling-text">${text}</div>
+    <div class="vote-btns">
+      <button class="vote-btn" onclick="vote('${id}','up',this)">👍<span class="vote-count" id="vc-${id}-up">0</span></button>
+      <button class="vote-btn" onclick="vote('${id}','side',this)">🤷<span class="vote-count" id="vc-${id}-side">0</span></button>
+      <button class="vote-btn" onclick="vote('${id}','down',this)">👎<span class="vote-count" id="vc-${id}-down">0</span></button>
+    </div>
+  </div>`;
+}
+
+function spoorToggle(id, kort, uitgebreid) {
+  return `<div class="card">
+    <div class="spoor-toggle">
+      <button class="spoor-btn active" onclick="switchSpoor('${id}','kort',this)">⚡ Kort</button>
+      <button class="spoor-btn" onclick="switchSpoor('${id}','uitgebreid',this)">◎ Uitgebreid</button>
+    </div>
+    <div class="spoor-content active" id="spoor-${id}-kort">${kort}</div>
+    <div class="spoor-content" id="spoor-${id}-uitgebreid">${uitgebreid}</div>
+  </div>`;
+}
+
+function principleBox(id, placeholder) {
+  return `<div class="principle-box">
+    <label>Streefuitkomst</label>
+    <textarea class="principle-input" data-sync="principle-${id}" placeholder="${placeholder}" oninput="onTextInput(this)" onfocus="focusedInput=this.dataset.sync" onblur="focusedInput=null;flushText(this)"></textarea>
+  </div>`;
+}
+
+function outcomeBox(text) {
+  return `<div class="outcome-box"><span class="outcome-icon">🎯</span><div class="outcome-text">${text}</div></div>`;
+}
+
+// ===== INIT =====
+function init() {
+  renderSidebar();
+  renderNavDots();
+  renderSection(0);
+}
+
+function renderSidebar() {
+  document.getElementById('sidebar').innerHTML = sections.map((s, i) =>
+    `<div class="sidebar-item ${i === currentSection ? 'active' : ''}" onclick="goToSection(${i})">
+      <div class="sidebar-icon">${s.icon}</div><div>${s.title}</div>
+      <div class="sidebar-time">${s.time}</div>
+    </div>`
+  ).join('');
+}
+
+function renderNavDots() {
+  document.getElementById('navDots').innerHTML = sections.map((_, i) =>
+    `<div class="nav-dot ${i === currentSection ? 'active' : ''}" onclick="goToSection(${i})"></div>`
+  ).join('');
+}
+
+function renderSection(idx) {
+  currentSection = idx;
+  const s = sections[idx];
+  document.getElementById('content').innerHTML = s.render();
+  document.getElementById('content').scrollTop = 0;
+  document.getElementById('topbarSection').textContent = `${s.icon} ${s.title} — ${s.time}`;
+  document.getElementById('prevBtn').disabled = idx === 0;
+  document.getElementById('nextBtn').disabled = idx === sections.length - 1;
+  document.getElementById('nextBtn').textContent = idx === sections.length - 1 ? 'Klaar ✓' : 'Volgende →';
+  document.getElementById('progressFill').style.width = `${(idx / (sections.length - 1)) * 100}%`;
+  if (s.minutes) setTimer(s.minutes);
+  renderSidebar();
+  renderNavDots();
+  attachSyncListeners();
+  restoreUI();
+}
+
+function navigate(dir) {
+  const next = currentSection + dir;
+  if (next >= 0 && next < sections.length) renderSection(next);
+}
+function goToSection(idx) { renderSection(idx); }
+
+// ===== RESTORE UI (from localStorage) =====
+function restoreUI() {
+  for (const [id, counts] of Object.entries(state.votes || {})) {
+    ['up', 'side', 'down'].forEach(d => {
+      const el = document.getElementById(`vc-${id}-${d}`);
+      if (el) el.textContent = counts[d] || 0;
+    });
+  }
+  for (const [zoneId, stickies] of Object.entries(state.stickies || {})) {
+    const zone = document.getElementById(`zone-${zoneId}`);
+    if (!zone) continue;
+    const addBtn = zone.querySelector('.sticky-add');
+    for (const [stickyId, data] of Object.entries(stickies)) {
+      const note = createStickyElement(zoneId, stickyId, data);
+      zone.insertBefore(note, addBtn);
+    }
+  }
+  for (const [id, value] of Object.entries(state.texts || {})) {
+    const el = document.querySelector(`[data-sync="${id}"]`);
+    if (el && el.value !== value) el.value = value;
+  }
+}
+
+// ===== USER ACTIONS =====
+function vote(id, direction, btn) {
+  if (!state.votes[id]) state.votes[id] = { up: 0, side: 0, down: 0 };
+  state.votes[id][direction]++;
+  save();
+  const el = document.getElementById(`vc-${id}-${direction}`);
+  if (el) el.textContent = state.votes[id][direction];
+  btn.classList.add('flash-' + direction);
+  setTimeout(() => btn.classList.remove('flash-' + direction), 300);
+}
+
+function addSticky(zoneId) {
+  const zone = document.getElementById(`zone-${zoneId}`);
+  const color = zone.dataset.color;
+  const stickyId = `s-${Date.now()}-${Math.random().toString(36).slice(2,6)}`;
+  if (!state.stickies[zoneId]) state.stickies[zoneId] = {};
+  state.stickies[zoneId][stickyId] = { text: '', color };
+  save();
+  const note = createStickyElement(zoneId, stickyId, { text: '', color });
+  const addBtn = zone.querySelector('.sticky-add');
+  zone.insertBefore(note, addBtn);
+  note.querySelector('textarea').focus();
+}
+
+function deleteSticky(zoneId, stickyId) {
+  if (state.stickies[zoneId]) delete state.stickies[zoneId][stickyId];
+  save();
+  const el = document.querySelector(`[data-sticky-id="${stickyId}"]`);
+  if (el) el.remove();
+}
+
+function onStickyEdit(zoneId, stickyId, text) {
+  if (state.stickies[zoneId] && state.stickies[zoneId][stickyId]) {
+    state.stickies[zoneId][stickyId].text = text;
+    save();
+  }
+}
+
+function createStickyElement(zoneId, stickyId, data) {
+  const note = document.createElement('div');
+  note.className = 'sticky-note';
+  note.dataset.stickyId = stickyId;
+  note.style.background = data.color;
+  note.innerHTML = `
+    <button class="sticky-delete" onclick="deleteSticky('${zoneId}','${stickyId}')" title="Verwijder">✕</button>
+    <textarea placeholder="Type hier..."
+      oninput="onStickyEdit('${zoneId}','${stickyId}',this.value)"
+    >${data.text}</textarea>`;
+  return note;
+}
+
+function onTextInput(el) {
+  const id = el.dataset.sync;
+  state.texts[id] = el.value;
+  save();
+}
+
+function flushText(el) { onTextInput(el); }
+
+function attachSyncListeners() {
+  document.querySelectorAll('[data-sync]').forEach(el => {
+    if (el.tagName === 'TEXTAREA' || el.tagName === 'INPUT') {
+      el.addEventListener('input', () => onTextInput(el));
+    }
+  });
+}
+
+// ===== SPOOR TOGGLE =====
+function switchSpoor(id, spoor, btn) {
+  document.getElementById(`spoor-${id}-kort`).classList.toggle('active', spoor === 'kort');
+  document.getElementById(`spoor-${id}-uitgebreid`).classList.toggle('active', spoor === 'uitgebreid');
+  btn.parentElement.querySelectorAll('.spoor-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  setTimer(spoor === 'kort' ? 15 : 30);
+}
+
+// ===== TIMER =====
+function setTimer(min) {
+  timerSeconds = min * 60; timerOriginal = timerSeconds;
+  timerRunning = false; clearInterval(timerInterval);
+  updateTimerDisplay();
+  document.getElementById('timerToggle').textContent = 'Start';
+  document.getElementById('timerToggle').classList.remove('active');
+}
+function toggleTimer() {
+  if (timerSeconds <= 0 && !timerRunning) return;
+  timerRunning = !timerRunning;
+  const btn = document.getElementById('timerToggle');
+  if (timerRunning) {
+    btn.textContent = 'Pauze'; btn.classList.add('active');
+    timerInterval = setInterval(() => {
+      timerSeconds--;
+      updateTimerDisplay();
+      if (timerSeconds <= 0) {
+        clearInterval(timerInterval); timerRunning = false;
+        btn.textContent = 'Start'; btn.classList.remove('active');
+        showBeep();
+      }
+    }, 1000);
+  } else {
+    clearInterval(timerInterval); btn.textContent = 'Start'; btn.classList.remove('active');
+  }
+}
+function resetTimer() {
+  clearInterval(timerInterval); timerRunning = false;
+  timerSeconds = timerOriginal || 0; updateTimerDisplay();
+  document.getElementById('timerToggle').textContent = 'Start';
+  document.getElementById('timerToggle').classList.remove('active');
+}
+function updateTimerDisplay() {
+  const d = document.getElementById('timerDisplay');
+  if (timerSeconds <= 0 && timerOriginal === 0) { d.textContent = '--:--'; d.className = 'timer-display'; return; }
+  const m = Math.floor(Math.abs(timerSeconds) / 60);
+  const s = Math.abs(timerSeconds) % 60;
+  d.textContent = `${timerSeconds < 0 ? '-' : ''}${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  d.className = 'timer-display';
+  if (timerOriginal > 0) {
+    const pct = timerSeconds / timerOriginal;
+    if (pct <= 0) d.classList.add('danger');
+    else if (pct <= 0.2) d.classList.add('warning');
+  }
+}
+function showBeep() {
+  document.getElementById('beepOverlay').classList.add('show');
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    [0, 0.3, 0.6].forEach(delay => {
+      const osc = ctx.createOscillator(); const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.frequency.value = 880; osc.type = 'sine';
+      gain.gain.setValueAtTime(0.3, ctx.currentTime + delay);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + delay + 0.2);
+      osc.start(ctx.currentTime + delay); osc.stop(ctx.currentTime + delay + 0.25);
+    });
+  } catch(e) {}
+}
+function dismissBeep() { document.getElementById('beepOverlay').classList.remove('show'); }
+
+// ===== EXPORT =====
+function exportAll() {
+  let o = `KOERSBEPALING MAATSCHAP — UITKOMSTEN\n${'='.repeat(50)}\nDatum: ${new Date().toLocaleDateString('nl-NL',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}\n\n`;
+  const pIds = ['id-principle','pat-principle','zorg-principle','org-org','org-fin','org-org-l','org-fin-l','mw-wg','mw-on','kb-int','kb-ext','feedback-principle','synthese-principes'];
+  const pLabels = ['Identiteit','Patiënten','Zorginhoud','Organisatie — organisatieprincipe','Organisatie — financieel principe','Organisatie (uitgebr.) — organisatieprincipe','Organisatie (uitgebr.) — financieel principe','Medewerkers — wij geven','Medewerkers — wij verwachten','Kansen — intern principe','Kansen — extern principe','Feedback','Alle principes'];
+  o += `PRINCIPES\n${'-'.repeat(30)}\n`;
+  pIds.forEach((id, i) => {
+    const v = (state.texts || {})['principle-' + id];
+    if (v) o += `\n${pLabels[i]}:\n${v}\n`;
+  });
+  o += `\n\nSMART-ACTIEPUNTEN\n${'-'.repeat(30)}\n`;
+  for (let i = 1; i <= 8; i++) {
+    const a = (state.texts || {})[`smart-actie-${i}`];
+    if (a) o += `\n${i}. ${a}\n   Eigenaar: ${(state.texts||{})[`smart-eig-${i}`]||'—'}\n   Deadline: ${(state.texts||{})[`smart-dl-${i}`]||'—'}\n   Meting: ${(state.texts||{})[`smart-meet-${i}`]||'—'}\n`;
+  }
+  o += `\n\nEVALUATIE\n${'-'.repeat(30)}\nDatum: ${(state.texts||{})['eval-datum']||'—'}\nBewaker: ${(state.texts||{})['eval-bewaker']||'—'}\n`;
+  if (Object.keys(state.votes || {}).length) {
+    o += `\n\nSTEMRESULTATEN\n${'-'.repeat(30)}\n`;
+    for (const [id, v] of Object.entries(state.votes)) {
+      if (v.up || v.side || v.down) {
+        const el = document.getElementById(`stelling-${id}`);
+        const txt = el ? el.querySelector('.stelling-text')?.textContent?.trim() : id;
+        o += `\n"${txt}"\n  👍 ${v.up}  🤷 ${v.side}  👎 ${v.down}\n`;
+      }
+    }
+  }
+  if (Object.keys(state.stickies || {}).length) {
+    o += `\n\nSTICKY NOTES\n${'-'.repeat(30)}\n`;
+    for (const [zone, stickies] of Object.entries(state.stickies)) {
+      const notes = Object.values(stickies).filter(s => s.text);
+      if (notes.length) {
+        o += `\n[${zone}]\n`;
+        notes.forEach(s => o += `  • ${s.text}\n`);
+      }
+    }
+  }
+  const pre = document.getElementById('exportOutput');
+  pre.textContent = o; pre.style.display = 'block';
+  navigator.clipboard?.writeText(o).then(() => {
+    const btn = pre.previousElementSibling;
+    const orig = btn.textContent;
+    btn.textContent = '✓ Gekopieerd!';
+    setTimeout(() => btn.textContent = orig, 2000);
+  });
+}
+
+// ===== KEYBOARD NAV =====
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  if (e.key === 'ArrowRight') { e.preventDefault(); navigate(1); }
+  if (e.key === 'ArrowLeft') { e.preventDefault(); navigate(-1); }
+});
+
+// ===== START =====
+init();
+</script>
+<div style="text-align:center;padding:12px 0 8px;font-size:0.65rem;color:var(--text-secondary);opacity:0.5;">Koersbepaling v0.2</div>
+</body>
+</html>
