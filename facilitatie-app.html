@@ -700,7 +700,7 @@ const sections = [
       <!-- STAP 1 -->
       <div class="flow-step" data-step="1">
         <div class="card-title" style="margin-bottom:4px;">Stem: hoe werken wij eigenlijk?</div>
-        <div class="vote-hint">Wees eerlijk, niet beleefd. Deze stellingen zijn bewust scherp geformuleerd om het gesprek open te breken.</div>
+        <div class="vote-hint">Wees eerlijk, niet beleefd. Deze stellingen zijn bewust scherp geformuleerd om het gesprek open te breken. <span style="opacity:0.5;">Rechts-klik = stem corrigeren.</span></div>
       </div>
       <div style="padding-left:40px;">
         ${stelling('o-l1', 'Wij zijn een reactieve praktijk — we blussen brandjes in plaats van ze te voorkomen.')}
@@ -1037,7 +1037,7 @@ const sections = [
       <!-- KORT SPOOR -->
       <div class="flow-step" data-step="1">
         <div class="card-title" style="margin-bottom:4px;">Stem op de stellingen</div>
-        <div class="vote-hint">Wees eerlijk — er zijn geen foute antwoorden.</div>
+        <div class="vote-hint">Wees eerlijk — er zijn geen foute antwoorden. <span style="opacity:0.5;">Rechts-klik = stem corrigeren.</span></div>
       </div>
       <div style="padding-left:40px;">
         ${stelling('z-s1', 'Wij zeggen te vaak ja tegen zorg die eigenlijk niet bij ons hoort.')}
@@ -1064,7 +1064,7 @@ const sections = [
       <!-- UITGEBREID SPOOR: STAP 1 -->
       <div class="flow-step" data-step="1">
         <div class="card-title" style="margin-bottom:4px;">Stem: hoe gaan we om met binnenkomende zorg?</div>
-        <div class="vote-hint">Wees eerlijk — er zijn geen foute antwoorden.</div>
+        <div class="vote-hint">Wees eerlijk — er zijn geen foute antwoorden. <span style="opacity:0.5;">Rechts-klik = stem corrigeren.</span></div>
       </div>
       <div style="padding-left:40px;">
         ${stelling('z-l1', 'Wij zeggen te vaak ja tegen zorg die eigenlijk niet bij ons hoort.')}
@@ -1143,7 +1143,6 @@ function stelling(id, text) {
       <button class="vote-btn" onclick="vote('${id}','side',this)" oncontextmenu="return unvote('${id}','side',this)">🤷<span class="vote-count" id="vc-${id}-side">0</span></button>
       <button class="vote-btn" onclick="vote('${id}','down',this)" oncontextmenu="return unvote('${id}','down',this)">👎<span class="vote-count" id="vc-${id}-down">0</span></button>
     </div>
-    <div class="vote-hint-undo" style="display:none;font-size:0.6rem;color:var(--text-secondary);text-align:right;margin-top:2px;">Rechts-klik = stem verlagen</div>
   </div>`;
 }
 
@@ -1249,8 +1248,6 @@ function vote(id, direction, btn) {
   if (el) el.textContent = state.votes[id][direction];
   btn.classList.add('flash-' + direction);
   setTimeout(() => btn.classList.remove('flash-' + direction), 300);
-  const hint = btn.closest('.stelling')?.querySelector('.vote-hint-undo');
-  if (hint) { hint.style.display = 'block'; setTimeout(() => hint.style.display = 'none', 4000); }
 }
 
 function unvote(id, direction, btn) {
