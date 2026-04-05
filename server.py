@@ -4,6 +4,7 @@ Koersbepaling Maatschap — Live Server
 Zero dependencies, alleen Python 3.7+
 Start met: python3 server.py
 """
+import importlib
 import json
 import os
 import socket
@@ -53,11 +54,38 @@ class Handler(SimpleHTTPRequestHandler):
         if path == "/api/state":
             with state_lock:
                 self.send_json(state)
+        elif path == "/api/content":
+            try:
+                import content
+                importlib.reload(content)
+                self.send_json(content.to_dict())
+            except Exception as e:
+                self.send_json({"error": str(e)}, 500)
+        elif path == "/handout.pdf":
+            self._serve_pdf()
         elif path in ("/", ""):
             self.path = "/facilitatie-app.html"
             super().do_GET()
         else:
             super().do_GET()
+
+    def _serve_pdf(self):
+        try:
+            import generate_handout
+            importlib.reload(generate_handout)
+            pdf_bytes = generate_handout.build()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/pdf")
+            self.send_header("Content-Length", str(len(pdf_bytes)))
+            self.send_header("Cache-Control", "no-cache")
+            self.end_headers()
+            self.wfile.write(pdf_bytes)
+        except Exception as e:
+            body = f"PDF generation error: {e}".encode()
+            self.send_response(500)
+            self.send_header("Content-Type", "text/plain")
+            self.end_headers()
+            self.wfile.write(body)
 
     def do_POST(self):
         if self.path == "/api/update":
