@@ -397,12 +397,143 @@ body {
 }
 @keyframes livePulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
 
-/* RESPONSIVE */
+/* RESPONSIVE — TABLET (iPad) */
+@media (max-width: 1024px) {
+  .sidebar { width: 180px; }
+  .sidebar-item { font-size: 0.72rem; padding: 8px 12px; }
+  .sidebar-time { display: none; }
+  .content { padding: 24px 28px; }
+}
+
 @media (max-width: 900px) {
   .sidebar { display: none; }
   .content { padding: 20px; }
   .section-title { font-size: 1.6rem; }
   .timer-display { font-size: 1.4rem; }
+}
+
+/* RESPONSIVE — SMALL TABLET / LARGE PHONE */
+@media (max-width: 768px) {
+  .content [style*="grid-template-columns"] { grid-template-columns: 1fr !important; }
+  .topbar { padding: 8px 14px; flex-wrap: wrap; gap: 6px; }
+  .topbar-left { min-width: 0; }
+  .topbar-title { font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px; }
+  .topbar-section { font-size: 0.7rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+  .topbar-timer { gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+  .timer-btn { padding: 4px 8px; font-size: 0.65rem; }
+  .timer-display { font-size: 1.2rem; min-width: 70px; }
+
+  .content { padding: 16px; }
+  .section-title { font-size: 1.4rem; margin-bottom: 4px; }
+  .section-subtitle { font-size: 0.85rem; margin-bottom: 18px; }
+
+  .card { padding: 16px; margin-bottom: 12px; }
+  .card-title { font-size: 0.95rem; margin-bottom: 10px; }
+
+  .stelling { padding: 10px 12px; gap: 10px; font-size: 0.82rem; flex-wrap: wrap; }
+  .vote-btns { width: 100%; justify-content: flex-start; gap: 6px; }
+  .vote-btn { width: 52px; height: 32px; flex-direction: row; gap: 4px; }
+
+  .principle-split { grid-template-columns: 1fr; }
+  .principle-card { padding: 14px; }
+
+  .sticky-note { width: 130px; min-height: 85px; }
+  .sticky-add { width: 130px; min-height: 85px; }
+  .sticky-zone { padding: 10px; gap: 8px; }
+
+  .smart-table { font-size: 0.72rem; }
+  .smart-table th { padding: 6px 8px; font-size: 0.62rem; }
+  .smart-table td { padding: 4px 8px; }
+  .smart-table td input { font-size: 0.72rem; }
+
+  .mini-smart { font-size: 0.7rem; }
+  .mini-smart th { padding: 5px 6px; font-size: 0.6rem; }
+  .mini-smart td { padding: 4px 6px; }
+  .mini-smart td input { font-size: 0.7rem; }
+
+  .nav-bar { padding: 10px 14px; }
+  .nav-btn { padding: 7px 14px; font-size: 0.75rem; }
+  .nav-dots { gap: 4px; }
+  .nav-dot { width: 6px; height: 6px; }
+
+  .checkin-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  .reminder { padding: 10px 12px; font-size: 0.78rem; }
+
+  .flow-step { padding-left: 34px; }
+  .flow-step::before { width: 26px; height: 26px; font-size: 0.7rem; }
+  .flow-connector { margin-left: 12px; }
+
+  .pauze-title { font-size: 1.8rem; }
+  .pauze-icon { font-size: 2.5rem; }
+}
+
+/* RESPONSIVE — PHONE */
+@media (max-width: 480px) {
+  body { height: 100dvh; }
+  .content [style*="padding-left:40px"] { padding-left: 10px !important; }
+  .content [style*="padding-left: 40px"] { padding-left: 10px !important; }
+
+  .topbar { padding: 6px 10px; }
+  .topbar-title { font-size: 0.8rem; max-width: 130px; }
+  .topbar-section { font-size: 0.65rem; max-width: 150px; }
+  .topbar-timer { gap: 3px; }
+  .timer-btn { padding: 3px 6px; font-size: 0.6rem; border-radius: 4px; }
+  .timer-display { font-size: 1.1rem; min-width: 60px; }
+
+  .content { padding: 12px 10px; }
+  .section-badge { font-size: 0.6rem; padding: 2px 8px; }
+  .section-title { font-size: 1.2rem; }
+  .section-subtitle { font-size: 0.8rem; margin-bottom: 14px; }
+
+  .card { padding: 12px; border-radius: 10px; }
+  .card-title { font-size: 0.88rem; gap: 6px; }
+
+  .stelling { padding: 10px; gap: 8px; font-size: 0.78rem; border-radius: 8px; }
+  .stelling-text { font-size: 0.78rem; }
+  .vote-btn { width: 48px; height: 30px; border-radius: 6px; font-size: 0.75rem; }
+
+  .spoor-toggle { width: 100%; }
+  .spoor-btn { flex: 1; padding: 8px 12px; font-size: 0.75rem; text-align: center; }
+
+  .principle-box { padding: 12px 14px; }
+  .principle-input { font-size: 0.9rem; min-height: 40px; }
+
+  .sticky-note { width: 110px; min-height: 75px; padding: 8px; }
+  .sticky-note textarea { font-size: 0.7rem; min-height: 50px; }
+  .sticky-add { width: 110px; min-height: 75px; font-size: 1.2rem; }
+  .sticky-zone { padding: 8px; gap: 6px; min-height: 80px; }
+
+  .smart-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 -12px; padding: 0 12px; }
+  .smart-table { min-width: 500px; }
+
+  .steps li { padding: 6px 0 6px 34px; font-size: 0.8rem; }
+  .steps li::before { width: 22px; height: 22px; font-size: 0.65rem; }
+
+  .nav-bar { padding: 8px 10px; gap: 6px; }
+  .nav-btn { padding: 6px 12px; font-size: 0.7rem; border-width: 1.5px; }
+  .nav-dots { gap: 3px; overflow: hidden; max-width: 120px; flex-wrap: wrap; justify-content: center; }
+  .nav-dot { width: 5px; height: 5px; }
+
+  .checkin-grid { grid-template-columns: 1fr; gap: 8px; }
+  .checkin-q { padding: 12px; }
+  .checkin-q .q-num { font-size: 1.1rem; }
+  .checkin-q .q-text { font-size: 0.8rem; }
+
+  .reminder { gap: 8px; font-size: 0.75rem; }
+  .outcome-box { padding: 10px 12px; }
+  .outcome-box .outcome-text { font-size: 0.78rem; }
+
+  .beep-overlay .beep-text { font-size: 1.8rem; }
+  .beep-overlay .beep-sub { font-size: 0.85rem; }
+
+  .pauze-title { font-size: 1.5rem; }
+  .pauze-sub { font-size: 0.9rem; }
+  .pauze-icon { font-size: 2rem; margin-bottom: 12px; }
+
+  .flow-step { padding-left: 30px; }
+  .flow-step::before { width: 24px; height: 24px; font-size: 0.65rem; }
+  .flow-connector { margin-left: 11px; height: 18px; }
 }
 </style>
 </head>
