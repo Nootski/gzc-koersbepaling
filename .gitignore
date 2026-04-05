@@ -1,6 +1,5 @@
 *.pdf
 *.docx
-*.json
-*.py
+heidedag_state.json
 __pycache__/
 .DS_Store

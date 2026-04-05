@@ -599,12 +599,38 @@ let focusedInput = null;
 let state = (() => {
   try {
     const s = localStorage.getItem('heidedag-state');
-    return s ? JSON.parse(s) : { votes: {}, stickies: {}, texts: {} };
-  } catch(e) { return { votes: {}, stickies: {}, texts: {} }; }
+    return s ? JSON.parse(s) : { votes: {}, stickies: {}, texts: {}, version: 0 };
+  } catch(e) { return { votes: {}, stickies: {}, texts: {}, version: 0 }; }
 })();
+
+let serverAvailable = false;
 
 function save() {
   localStorage.setItem('heidedag-state', JSON.stringify(state));
+}
+
+function serverPush(update) {
+  fetch('/api/update', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(update)
+  }).then(r => { if (r.ok) serverAvailable = true; })
+    .catch(() => { serverAvailable = false; });
+}
+
+async function initFromServer() {
+  try {
+    const r = await fetch('/api/state');
+    if (!r.ok) return;
+    const remote = await r.json();
+    serverAvailable = true;
+    if (Object.keys(remote.votes || {}).length || Object.keys(remote.stickies || {}).length || Object.keys(remote.texts || {}).length) {
+      state = remote;
+      save();
+    }
+  } catch(e) {
+    serverAvailable = false;
+  }
 }
 
 // ===== SECTIONS DATA =====
@@ -1187,7 +1213,7 @@ function navigate(dir) {
 }
 function goToSection(idx) { renderSection(idx); }
 
-// ===== RESTORE UI (from localStorage) =====
+// ===== RESTORE UI (from state) =====
 function restoreUI() {
   for (const [id, counts] of Object.entries(state.votes || {})) {
     ['up', 'side', 'down'].forEach(d => {
@@ -1200,8 +1226,10 @@ function restoreUI() {
     if (!zone) continue;
     const addBtn = zone.querySelector('.sticky-add');
     for (const [stickyId, data] of Object.entries(stickies)) {
-      const note = createStickyElement(zoneId, stickyId, data);
-      zone.insertBefore(note, addBtn);
+      if (!zone.querySelector(`[data-sticky-id="${stickyId}"]`)) {
+        const note = createStickyElement(zoneId, stickyId, data);
+        zone.insertBefore(note, addBtn);
+      }
     }
   }
   for (const [id, value] of Object.entries(state.texts || {})) {
@@ -1215,6 +1243,7 @@ function vote(id, direction, btn) {
   if (!state.votes[id]) state.votes[id] = { up: 0, side: 0, down: 0 };
   state.votes[id][direction]++;
   save();
+  serverPush({ type: 'vote', id, direction });
   const el = document.getElementById(`vc-${id}-${direction}`);
   if (el) el.textContent = state.votes[id][direction];
   btn.classList.add('flash-' + direction);
@@ -1228,6 +1257,7 @@ function addSticky(zoneId) {
   if (!state.stickies[zoneId]) state.stickies[zoneId] = {};
   state.stickies[zoneId][stickyId] = { text: '', color };
   save();
+  serverPush({ type: 'sticky_add', zone: zoneId, id: stickyId, text: '', color, author: '', authorColor: color });
   const note = createStickyElement(zoneId, stickyId, { text: '', color });
   const addBtn = zone.querySelector('.sticky-add');
   zone.insertBefore(note, addBtn);
@@ -1237,6 +1267,7 @@ function addSticky(zoneId) {
 function deleteSticky(zoneId, stickyId) {
   if (state.stickies[zoneId]) delete state.stickies[zoneId][stickyId];
   save();
+  serverPush({ type: 'sticky_delete', zone: zoneId, id: stickyId });
   const el = document.querySelector(`[data-sticky-id="${stickyId}"]`);
   if (el) el.remove();
 }
@@ -1245,6 +1276,7 @@ function onStickyEdit(zoneId, stickyId, text) {
   if (state.stickies[zoneId] && state.stickies[zoneId][stickyId]) {
     state.stickies[zoneId][stickyId].text = text;
     save();
+    serverPush({ type: 'sticky_update', zone: zoneId, id: stickyId, text });
   }
 }
 
@@ -1261,13 +1293,24 @@ function createStickyElement(zoneId, stickyId, data) {
   return note;
 }
 
+let textDebounceTimers = {};
 function onTextInput(el) {
   const id = el.dataset.sync;
   state.texts[id] = el.value;
   save();
+  clearTimeout(textDebounceTimers[id]);
+  textDebounceTimers[id] = setTimeout(() => {
+    serverPush({ type: 'text', id, value: el.value });
+  }, 500);
 }
 
-function flushText(el) { onTextInput(el); }
+function flushText(el) {
+  const id = el.dataset.sync;
+  state.texts[id] = el.value;
+  save();
+  clearTimeout(textDebounceTimers[id]);
+  serverPush({ type: 'text', id, value: el.value });
+}
 
 function attachSyncListeners() {
   document.querySelectorAll('[data-sync]').forEach(el => {
@@ -1402,7 +1445,7 @@ document.addEventListener('keydown', e => {
 });
 
 // ===== START =====
-init();
+initFromServer().then(() => init());
 </script>
 <div style="text-align:center;padding:12px 0 8px;font-size:0.65rem;color:var(--text-secondary);opacity:0.5;">Koersbepaling v0.2</div>
 </body>
