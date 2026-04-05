@@ -177,7 +177,8 @@ body {
   transition: all 0.15s; gap: 1px; line-height: 1;
 }
 .vote-btn:hover { transform: scale(1.1); }
-.vote-btn .vote-count { font-size: 0.55rem; font-weight: 700; color: var(--text-secondary); }
+.vote-btn .vote-count { font-size: 0.55rem; font-weight: 700; color: var(--text-secondary); cursor: pointer; border-radius: 3px; padding: 0 2px; }
+.vote-btn .vote-count:hover { background: var(--red-light); color: var(--red); }
 .vote-btn.flash-up { background: var(--green-light); border-color: var(--green); }
 .vote-btn.flash-down { background: var(--red-light); border-color: var(--red); }
 .vote-btn.flash-side { background: var(--yellow-light); border-color: var(--yellow); }
@@ -700,7 +701,7 @@ const sections = [
       <!-- STAP 1 -->
       <div class="flow-step" data-step="1">
         <div class="card-title" style="margin-bottom:4px;">Stem: hoe werken wij eigenlijk?</div>
-        <div class="vote-hint">Wees eerlijk, niet beleefd. Deze stellingen zijn bewust scherp geformuleerd om het gesprek open te breken. <span style="opacity:0.5;">Rechts-klik = stem corrigeren.</span></div>
+        <div class="vote-hint">Wees eerlijk, niet beleefd. Deze stellingen zijn bewust scherp geformuleerd om het gesprek open te breken. <span style="opacity:0.5;">Klik op het getal om een stem te corrigeren.</span></div>
       </div>
       <div style="padding-left:40px;">
         ${stelling('o-l1', 'Wij zijn een reactieve praktijk — we blussen brandjes in plaats van ze te voorkomen.')}
@@ -1037,7 +1038,7 @@ const sections = [
       <!-- KORT SPOOR -->
       <div class="flow-step" data-step="1">
         <div class="card-title" style="margin-bottom:4px;">Stem op de stellingen</div>
-        <div class="vote-hint">Wees eerlijk — er zijn geen foute antwoorden. <span style="opacity:0.5;">Rechts-klik = stem corrigeren.</span></div>
+        <div class="vote-hint">Wees eerlijk — er zijn geen foute antwoorden. <span style="opacity:0.5;">Klik op het getal om een stem te corrigeren.</span></div>
       </div>
       <div style="padding-left:40px;">
         ${stelling('z-s1', 'Wij zeggen te vaak ja tegen zorg die eigenlijk niet bij ons hoort.')}
@@ -1064,7 +1065,7 @@ const sections = [
       <!-- UITGEBREID SPOOR: STAP 1 -->
       <div class="flow-step" data-step="1">
         <div class="card-title" style="margin-bottom:4px;">Stem: hoe gaan we om met binnenkomende zorg?</div>
-        <div class="vote-hint">Wees eerlijk — er zijn geen foute antwoorden. <span style="opacity:0.5;">Rechts-klik = stem corrigeren.</span></div>
+        <div class="vote-hint">Wees eerlijk — er zijn geen foute antwoorden. <span style="opacity:0.5;">Klik op het getal om een stem te corrigeren.</span></div>
       </div>
       <div style="padding-left:40px;">
         ${stelling('z-l1', 'Wij zeggen te vaak ja tegen zorg die eigenlijk niet bij ons hoort.')}
@@ -1139,9 +1140,9 @@ function stelling(id, text) {
   return `<div class="stelling" id="stelling-${id}">
     <div class="stelling-text">${text}</div>
     <div class="vote-btns">
-      <button class="vote-btn" onclick="vote('${id}','up',this)" oncontextmenu="return unvote('${id}','up',this)">👍<span class="vote-count" id="vc-${id}-up">0</span></button>
-      <button class="vote-btn" onclick="vote('${id}','side',this)" oncontextmenu="return unvote('${id}','side',this)">🤷<span class="vote-count" id="vc-${id}-side">0</span></button>
-      <button class="vote-btn" onclick="vote('${id}','down',this)" oncontextmenu="return unvote('${id}','down',this)">👎<span class="vote-count" id="vc-${id}-down">0</span></button>
+      <button class="vote-btn" onclick="vote('${id}','up',this)">👍<span class="vote-count" id="vc-${id}-up" onclick="event.stopPropagation();unvote('${id}','up',this.closest('.vote-btn'))">0</span></button>
+      <button class="vote-btn" onclick="vote('${id}','side',this)">🤷<span class="vote-count" id="vc-${id}-side" onclick="event.stopPropagation();unvote('${id}','side',this.closest('.vote-btn'))">0</span></button>
+      <button class="vote-btn" onclick="vote('${id}','down',this)">👎<span class="vote-count" id="vc-${id}-down" onclick="event.stopPropagation();unvote('${id}','down',this.closest('.vote-btn'))">0</span></button>
     </div>
   </div>`;
 }
