@@ -175,10 +175,10 @@ body {
   background: white; cursor: pointer; font-size: 0.85rem; display: flex;
   flex-direction: column; align-items: center; justify-content: center;
   transition: all 0.15s; gap: 1px; line-height: 1;
+  touch-action: manipulation; user-select: none; -webkit-user-select: none;
 }
 .vote-btn:hover { transform: scale(1.1); }
-.vote-btn .vote-count { font-size: 0.55rem; font-weight: 700; color: var(--text-secondary); cursor: pointer; border-radius: 3px; padding: 0 2px; }
-.vote-btn .vote-count:hover { background: var(--red-light); color: var(--red); }
+.vote-btn .vote-count { font-size: 0.55rem; font-weight: 700; color: var(--text-secondary); }
 .vote-btn.flash-up { background: var(--green-light); border-color: var(--green); }
 .vote-btn.flash-down { background: var(--red-light); border-color: var(--red); }
 .vote-btn.flash-side { background: var(--yellow-light); border-color: var(--yellow); }
@@ -699,7 +699,7 @@ const sections = [
       <!-- STAP 1 -->
       <div class="flow-step" data-step="1">
         <div class="card-title" style="margin-bottom:4px;">Stem: hoe werken wij eigenlijk?</div>
-        <div class="vote-hint">Wees eerlijk, niet beleefd. Deze stellingen zijn bewust scherp geformuleerd om het gesprek open te breken. <span style="opacity:0.5;">Klik op het getal om een stem te corrigeren.</span></div>
+        <div class="vote-hint">Wees eerlijk, niet beleefd. Deze stellingen zijn bewust scherp geformuleerd om het gesprek open te breken. <span style="opacity:0.5;">Ingedrukt houden = stem corrigeren.</span></div>
       </div>
       <div style="padding-left:40px;">
         ${stelling('o-l1', 'Wij zijn een reactieve praktijk — we blussen brandjes in plaats van ze te voorkomen.')}
@@ -1036,7 +1036,7 @@ const sections = [
       <!-- KORT SPOOR -->
       <div class="flow-step" data-step="1">
         <div class="card-title" style="margin-bottom:4px;">Stem op de stellingen</div>
-        <div class="vote-hint">Wees eerlijk — er zijn geen foute antwoorden. <span style="opacity:0.5;">Klik op het getal om een stem te corrigeren.</span></div>
+        <div class="vote-hint">Wees eerlijk — er zijn geen foute antwoorden. <span style="opacity:0.5;">Ingedrukt houden = stem corrigeren.</span></div>
       </div>
       <div style="padding-left:40px;">
         ${stelling('z-s1', 'Wij zeggen te vaak ja tegen zorg die eigenlijk niet bij ons hoort.')}
@@ -1063,7 +1063,7 @@ const sections = [
       <!-- UITGEBREID SPOOR: STAP 1 -->
       <div class="flow-step" data-step="1">
         <div class="card-title" style="margin-bottom:4px;">Stem: hoe gaan we om met binnenkomende zorg?</div>
-        <div class="vote-hint">Wees eerlijk — er zijn geen foute antwoorden. <span style="opacity:0.5;">Klik op het getal om een stem te corrigeren.</span></div>
+        <div class="vote-hint">Wees eerlijk — er zijn geen foute antwoorden. <span style="opacity:0.5;">Ingedrukt houden = stem corrigeren.</span></div>
       </div>
       <div style="padding-left:40px;">
         ${stelling('z-l1', 'Wij zeggen te vaak ja tegen zorg die eigenlijk niet bij ons hoort.')}
@@ -1138,9 +1138,9 @@ function stelling(id, text) {
   return `<div class="stelling" id="stelling-${id}">
     <div class="stelling-text">${text}</div>
     <div class="vote-btns">
-      <button class="vote-btn" onclick="vote('${id}','up',this)">👍<span class="vote-count" id="vc-${id}-up" onclick="event.stopPropagation();unvote('${id}','up',this.closest('.vote-btn'))">0</span></button>
-      <button class="vote-btn" onclick="vote('${id}','side',this)">🤷<span class="vote-count" id="vc-${id}-side" onclick="event.stopPropagation();unvote('${id}','side',this.closest('.vote-btn'))">0</span></button>
-      <button class="vote-btn" onclick="vote('${id}','down',this)">👎<span class="vote-count" id="vc-${id}-down" onclick="event.stopPropagation();unvote('${id}','down',this.closest('.vote-btn'))">0</span></button>
+      <button class="vote-btn" onpointerdown="vDown('${id}','up',this,event)" onpointerup="vUp('${id}','up',this)" onpointercancel="vCancel(this)" onpointerleave="vCancel(this)">👍<span class="vote-count" id="vc-${id}-up">0</span></button>
+      <button class="vote-btn" onpointerdown="vDown('${id}','side',this,event)" onpointerup="vUp('${id}','side',this)" onpointercancel="vCancel(this)" onpointerleave="vCancel(this)">🤷<span class="vote-count" id="vc-${id}-side">0</span></button>
+      <button class="vote-btn" onpointerdown="vDown('${id}','down',this,event)" onpointerup="vUp('${id}','down',this)" onpointercancel="vCancel(this)" onpointerleave="vCancel(this)">👎<span class="vote-count" id="vc-${id}-down">0</span></button>
     </div>
   </div>`;
 }
@@ -1238,28 +1238,36 @@ function restoreUI() {
 }
 
 // ===== USER ACTIONS =====
-function vote(id, direction, btn) {
-  if (!state.votes[id]) state.votes[id] = { up: 0, side: 0, down: 0 };
-  state.votes[id][direction]++;
-  save();
-  serverPush({ type: 'vote', id, direction });
-  const el = document.getElementById(`vc-${id}-${direction}`);
-  if (el) el.textContent = state.votes[id][direction];
-  btn.classList.add('flash-' + direction);
-  setTimeout(() => btn.classList.remove('flash-' + direction), 300);
+function vDown(id, dir, btn, e) {
+  e.preventDefault();
+  btn._vLong = false;
+  btn._vTimer = setTimeout(() => {
+    btn._vLong = true;
+    if (!state.votes[id] || (state.votes[id][dir] || 0) <= 0) return;
+    state.votes[id][dir]--;
+    save();
+    serverPush({ type: 'unvote', id, direction: dir });
+    const el = document.getElementById(`vc-${id}-${dir}`);
+    if (el) el.textContent = state.votes[id][dir];
+    btn.style.background = '#fce4ec';
+    setTimeout(() => btn.style.background = '', 400);
+  }, 500);
 }
-
-function unvote(id, direction, btn) {
-  if (!state.votes[id]) return false;
-  if ((state.votes[id][direction] || 0) <= 0) return false;
-  state.votes[id][direction]--;
+function vUp(id, dir, btn) {
+  clearTimeout(btn._vTimer);
+  if (btn._vLong) return;
+  if (!state.votes[id]) state.votes[id] = { up: 0, side: 0, down: 0 };
+  state.votes[id][dir]++;
   save();
-  serverPush({ type: 'unvote', id, direction });
-  const el = document.getElementById(`vc-${id}-${direction}`);
-  if (el) el.textContent = state.votes[id][direction];
-  btn.style.background = '#fce4ec';
-  setTimeout(() => btn.style.background = '', 300);
-  return false;
+  serverPush({ type: 'vote', id, direction: dir });
+  const el = document.getElementById(`vc-${id}-${dir}`);
+  if (el) el.textContent = state.votes[id][dir];
+  btn.classList.add('flash-' + dir);
+  setTimeout(() => btn.classList.remove('flash-' + dir), 300);
+}
+function vCancel(btn) {
+  clearTimeout(btn._vTimer);
+  btn._vLong = false;
 }
 
 function addSticky(zoneId) {
