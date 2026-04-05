@@ -67,6 +67,20 @@ class TestServerAPI:
         assert state["votes"]["s1"]["up"] == 2
         assert state["votes"]["s1"]["down"] == 1
 
+    def test_unvote_decrements(self):
+        _post(self.port, "/api/update", {"type": "vote", "id": "s1", "direction": "up"})
+        _post(self.port, "/api/update", {"type": "vote", "id": "s1", "direction": "up"})
+        _post(self.port, "/api/update", {"type": "unvote", "id": "s1", "direction": "up"})
+        state = _get(self.port, "/api/state")
+        assert state["votes"]["s1"]["up"] == 1
+
+    def test_unvote_does_not_go_below_zero(self):
+        _post(self.port, "/api/update", {"type": "vote", "id": "s2", "direction": "down"})
+        _post(self.port, "/api/update", {"type": "unvote", "id": "s2", "direction": "down"})
+        _post(self.port, "/api/update", {"type": "unvote", "id": "s2", "direction": "down"})
+        state = _get(self.port, "/api/state")
+        assert state["votes"]["s2"]["down"] == 0
+
     def test_text_update(self):
         _post(self.port, "/api/update", {"type": "text", "id": "principle-org", "value": "Wij organiseren..."})
         state = _get(self.port, "/api/state")

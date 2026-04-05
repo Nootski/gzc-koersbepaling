@@ -82,6 +82,12 @@ class Handler(SimpleHTTPRequestHandler):
                 state["votes"][sid] = {"up": 0, "side": 0, "down": 0}
             state["votes"][sid][d] = state["votes"][sid].get(d, 0) + 1
 
+        elif t == "unvote":
+            sid = update["id"]
+            d = update["direction"]
+            if sid in state["votes"] and state["votes"][sid].get(d, 0) > 0:
+                state["votes"][sid][d] -= 1
+
         elif t == "sticky_add":
             zone = update["zone"]
             if zone not in state["stickies"]:

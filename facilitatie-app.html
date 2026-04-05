@@ -1139,10 +1139,11 @@ function stelling(id, text) {
   return `<div class="stelling" id="stelling-${id}">
     <div class="stelling-text">${text}</div>
     <div class="vote-btns">
-      <button class="vote-btn" onclick="vote('${id}','up',this)">👍<span class="vote-count" id="vc-${id}-up">0</span></button>
-      <button class="vote-btn" onclick="vote('${id}','side',this)">🤷<span class="vote-count" id="vc-${id}-side">0</span></button>
-      <button class="vote-btn" onclick="vote('${id}','down',this)">👎<span class="vote-count" id="vc-${id}-down">0</span></button>
+      <button class="vote-btn" onclick="vote('${id}','up',this)" oncontextmenu="return unvote('${id}','up',this)">👍<span class="vote-count" id="vc-${id}-up">0</span></button>
+      <button class="vote-btn" onclick="vote('${id}','side',this)" oncontextmenu="return unvote('${id}','side',this)">🤷<span class="vote-count" id="vc-${id}-side">0</span></button>
+      <button class="vote-btn" onclick="vote('${id}','down',this)" oncontextmenu="return unvote('${id}','down',this)">👎<span class="vote-count" id="vc-${id}-down">0</span></button>
     </div>
+    <div class="vote-hint-undo" style="display:none;font-size:0.6rem;color:var(--text-secondary);text-align:right;margin-top:2px;">Rechts-klik = stem verlagen</div>
   </div>`;
 }
 
@@ -1248,6 +1249,21 @@ function vote(id, direction, btn) {
   if (el) el.textContent = state.votes[id][direction];
   btn.classList.add('flash-' + direction);
   setTimeout(() => btn.classList.remove('flash-' + direction), 300);
+  const hint = btn.closest('.stelling')?.querySelector('.vote-hint-undo');
+  if (hint) { hint.style.display = 'block'; setTimeout(() => hint.style.display = 'none', 4000); }
+}
+
+function unvote(id, direction, btn) {
+  if (!state.votes[id]) return false;
+  if ((state.votes[id][direction] || 0) <= 0) return false;
+  state.votes[id][direction]--;
+  save();
+  serverPush({ type: 'unvote', id, direction });
+  const el = document.getElementById(`vc-${id}-${direction}`);
+  if (el) el.textContent = state.votes[id][direction];
+  btn.style.background = '#fce4ec';
+  setTimeout(() => btn.style.background = '', 300);
+  return false;
 }
 
 function addSticky(zoneId) {
