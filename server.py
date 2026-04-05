@@ -61,7 +61,7 @@ class Handler(SimpleHTTPRequestHandler):
                 self.send_json(content.to_dict())
             except Exception as e:
                 self.send_json({"error": str(e)}, 500)
-        elif path == "/handout.pdf":
+        elif path in ("/handout.pdf", "/api/handout.pdf"):
             self._serve_pdf()
         elif path in ("/", ""):
             self.path = "/facilitatie-app.html"
