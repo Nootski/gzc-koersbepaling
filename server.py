@@ -30,7 +30,7 @@ state = load_state()
 
 
 class Handler(SimpleHTTPRequestHandler):
-    def log_message(self, format, *args):
+    def log_message(self, fmt, *args):
         pass
 
     def send_json(self, data, code=200):
