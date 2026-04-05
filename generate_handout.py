@@ -16,7 +16,7 @@ ARIAL_ITALIC = "/System/Library/Fonts/Supplemental/Arial Narrow Italic.ttf"
 if not os.path.exists(ARIAL_UNI):
     ARIAL_UNI = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
     ARIAL_BOLD = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
-    ARIAL_ITALIC = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Oblique.ttf"
+    ARIAL_ITALIC = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
 
 PRIMARY = (27, 77, 79)
 ACCENT = (193, 105, 79)
