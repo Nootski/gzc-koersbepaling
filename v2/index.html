@@ -411,27 +411,31 @@ const sections = [
 {
   id:'synthese', icon:'🎯', title:'Synthese', time:'15:40–16:25', minutes:45,
   render: () => {
-    const P = [
-      { key:'principle-org-org-l', icon:'⚙️', label:'Organisatieprincipe', cls:'org' },
-      { key:'principle-org-fin-l', icon:'💰', label:'Financieel principe', cls:'fin' },
-      { key:'principle-mw-wg',    icon:'👥', label:'Wij geven (medewerkers)', cls:'mw-wg' },
-      { key:'principle-mw-on',    icon:'🎯', label:'Wij verwachten (medewerkers)', cls:'mw-on' },
-      { key:'principle-kb-int',   icon:'🏠', label:'Intern principe', cls:'kb-int' },
-      { key:'principle-kb-ext',   icon:'🌍', label:'Extern principe', cls:'kb-ext' },
-    ];
-    const cards = P.map(p => {
-      const val = (state.texts || {})[p.key] || '';
-      return `<div class="synth-principle-card ${p.cls}">
-        <div class="synth-principle-label">${p.icon} ${p.label}</div>
-        <div class="synth-principle-text">${val || '<span style="opacity:0.4;font-style:italic;">nog niet ingevuld</span>'}</div>
+    const t = state.texts || {};
+    function pc(key, label, cls) {
+      const val = t[key] || '';
+      return `<div class="synth-principle-card ${cls} ${val?'':'empty'}">
+        <div class="synth-principle-label">${label}</div>
+        <div class="synth-principle-text">${val || '<span class="synth-empty">nog niet ingevuld</span>'}</div>
       </div>`;
-    }).join('');
+    }
+    const domains = `
+      <div class="synth-domain">
+        <div class="synth-domain-header"><div class="synth-domain-icon dom-org">⚙️</div><div class="synth-domain-name">Organisatie & processen</div></div>
+        <div class="synth-pair">${pc('principle-org-org-l','Organisatieprincipe','org')}${pc('principle-org-fin-l','Financieel principe','fin')}</div>
+      </div>
+      <div class="synth-domain">
+        <div class="synth-domain-header"><div class="synth-domain-icon dom-mw">👥</div><div class="synth-domain-name">Medewerkers</div></div>
+        <div class="synth-pair">${pc('principle-mw-wg','Wij geven','mw-wg')}${pc('principle-mw-on','Wij verwachten','mw-on')}</div>
+      </div>
+      <div class="synth-domain">
+        <div class="synth-domain-header"><div class="synth-domain-icon dom-kb">🔭</div><div class="synth-domain-name">Kansen & bedreigingen</div></div>
+        <div class="synth-pair">${pc('principle-kb-int','Intern principe','kb-int')}${pc('principle-kb-ext','Extern principe','kb-ext')}</div>
+      </div>`;
     return `
     <div class="section-badge">Kern van de dag</div>
     <div class="section-title">Synthese</div>
-    <div class="card"><div class="card-title">📌 Principes overzicht</div>
-      <div class="synth-principles-grid">${cards}</div>
-    </div>
+    <div class="card"><div class="card-title">📌 Principes overzicht</div>${domains}</div>
     <div class="card"><div class="card-title">📝 Definitieve principes</div>
       ${principleBox('synthese-principes', 'Pas hier de principes aan / voeg samen tot definitieve versie')}</div>
     <div class="card"><div class="card-title">📋 Taakverdeling</div>${stickyZone('synthese-taken', 'yellow')}</div>

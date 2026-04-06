@@ -204,10 +204,26 @@ body {
 .outcome-box .outcome-text { font-size: 0.84rem; line-height: 1.5; color: var(--green); font-weight: 500; }
 
 /* SYNTHESE PRINCIPLES OVERVIEW */
-.synth-principles-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.synth-domain { margin-bottom: 16px; }
+.synth-domain:last-child { margin-bottom: 0; }
+.synth-domain-header {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
+  padding-bottom: 8px; border-bottom: 1px solid var(--border);
+}
+.synth-domain-icon {
+  width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center;
+  justify-content: center; font-size: 0.85rem; flex-shrink: 0;
+}
+.synth-domain-icon.dom-org { background: var(--primary-light); }
+.synth-domain-icon.dom-mw { background: var(--accent-light); }
+.synth-domain-icon.dom-kb { background: var(--green-light); }
+.synth-domain-name {
+  font-family: 'Fraunces', serif; font-size: 0.9rem; font-weight: 600; color: var(--primary);
+}
+.synth-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .synth-principle-card {
-  border-radius: var(--radius); padding: 14px 16px; border-left: 4px solid;
-  background: white;
+  border-radius: 10px; padding: 14px 16px; border-left: 4px solid;
+  background: white; box-shadow: 0 1px 4px rgba(0,0,0,0.04);
 }
 .synth-principle-card.org { border-color: var(--primary); background: var(--primary-light); }
 .synth-principle-card.fin { border-color: var(--yellow); background: var(--yellow-light); }
@@ -215,12 +231,25 @@ body {
 .synth-principle-card.mw-on { border-color: var(--green); background: var(--green-light); }
 .synth-principle-card.kb-int { border-color: var(--primary); background: var(--primary-light); }
 .synth-principle-card.kb-ext { border-color: var(--accent); background: var(--accent-light); }
+.synth-principle-card.empty { opacity: 0.5; }
 .synth-principle-label {
-  font-size: 0.68rem; font-weight: 600; text-transform: uppercase;
-  letter-spacing: 0.06em; margin-bottom: 6px; opacity: 0.7;
+  font-size: 0.62rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.08em; margin-bottom: 6px;
 }
-.synth-principle-text { font-size: 0.88rem; line-height: 1.5; white-space: pre-wrap; }
-@media (max-width: 768px) { .synth-principles-grid { grid-template-columns: 1fr; } }
+.synth-principle-card.org .synth-principle-label { color: var(--primary); }
+.synth-principle-card.fin .synth-principle-label { color: var(--yellow); }
+.synth-principle-card.mw-wg .synth-principle-label { color: var(--accent); }
+.synth-principle-card.mw-on .synth-principle-label { color: var(--green); }
+.synth-principle-card.kb-int .synth-principle-label { color: var(--primary); }
+.synth-principle-card.kb-ext .synth-principle-label { color: var(--accent); }
+.synth-principle-text {
+  font-family: 'Fraunces', serif; font-size: 0.92rem; line-height: 1.5;
+  white-space: pre-wrap; color: var(--text);
+}
+.synth-principle-text .synth-empty {
+  font-family: 'Inter', sans-serif; font-size: 0.8rem; font-style: italic; opacity: 0.5;
+}
+@media (max-width: 768px) { .synth-pair { grid-template-columns: 1fr; } }
 
 /* PAUZE */
 .pauze-screen {
