@@ -219,6 +219,9 @@ body {
 .synth-domain-icon.dom-org { background: var(--primary-light); }
 .synth-domain-icon.dom-mw { background: var(--accent-light); }
 .synth-domain-icon.dom-kb { background: var(--green-light); }
+.synth-domain-icon.dom-id { background: var(--yellow-light); }
+.synth-domain-icon.dom-pat { background: #e8f5e9; }
+.synth-domain-icon.dom-zorg { background: #fce4ec; }
 .synth-domain-name {
   font-family: 'Fraunces', serif; font-size: 0.9rem; font-weight: 600; color: var(--primary);
 }

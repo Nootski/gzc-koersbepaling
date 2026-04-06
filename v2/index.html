@@ -6,7 +6,7 @@
 <title>Koersbepaling v2 — Facilitator</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="shared.css?v=4">
+<link rel="stylesheet" href="shared.css?v=5">
 <style>
 html, body { height: 100vh; overflow: hidden; }
 body { display: flex; flex-direction: column; }
@@ -221,7 +221,7 @@ body { display: flex; flex-direction: column; }
   <button class="nav-btn primary" id="nextBtn" onclick="nav(1)">Volgende →</button>
 </div>
 
-<script src="shared.js?v=4"></script>
+<script src="shared.js?v=5"></script>
 <script>
 let currentSection = 0;
 let timerSeconds = 0, timerRunning = false, timerInterval = null, timerOriginal = 0;
@@ -431,6 +431,18 @@ const sections = [
       <div class="synth-domain">
         <div class="synth-domain-header"><div class="synth-domain-icon dom-kb">🔭</div><div class="synth-domain-name">Kansen & bedreigingen</div></div>
         <div class="synth-pair">${pc('principle-kb-int','Intern principe','kb-int')}${pc('principle-kb-ext','Extern principe','kb-ext')}</div>
+      </div>
+      <div class="synth-domain">
+        <div class="synth-domain-header"><div class="synth-domain-icon dom-id">🧭</div><div class="synth-domain-name">Identiteit</div></div>
+        <div class="synth-pair">${pc('id-principle','Kernwaarden + missiezin','id')}</div>
+      </div>
+      <div class="synth-domain">
+        <div class="synth-domain-header"><div class="synth-domain-icon dom-pat">🤝</div><div class="synth-domain-name">Patiënten</div></div>
+        <div class="synth-pair">${pc('pat-principle','Patiëntprincipe(s)','pat')}</div>
+      </div>
+      <div class="synth-domain">
+        <div class="synth-domain-header"><div class="synth-domain-icon dom-zorg">🩺</div><div class="synth-domain-name">Zorginhoud</div></div>
+        <div class="synth-pair">${pc('zorg-principle','Zorginhoud-principes','zorg')}</div>
       </div>`;
     return `
     <div class="section-badge">Kern van de dag</div>
@@ -766,6 +778,16 @@ const STELLING_LABELS = {
   'o-l6': 'Als we nu de juiste keuzes maken, betere praktijk over 2 jaar',
   'o-l7': 'We zijn duurzaam, maar het mag geen geld kosten',
   'o-l8': 'Onze dagstructuur klopt',
+  'pat-s1': 'Wij zijn primair empowerend',
+  'pat-s2': 'Toegankelijk voor kwetsbare patiënten',
+  'pat-s3': 'Consequent nee als zorg niet bij ons hoort',
+  'pat-s4': 'Patiënten weten wat ze verwachten qua bereikbaarheid',
+  'z-l1': 'Te vaak ja tegen zorg die niet bij ons hoort',
+  'z-l2': 'Substitutie vanuit ziekenhuis te makkelijk',
+  'z-l3': 'Ruimte voor zorg die POH/assistent leuk vindt',
+  'z-l4': 'Geen helder criterium wat we oppakken',
+  'z-l5': 'Preventie — te weinig mee gedaan',
+  'z-l6': 'Niet eenduidig in wat we wel/niet doen',
 };
 const ZONE_LABELS = {
   'checkin-themes': 'Check-in thema\'s',
@@ -778,6 +800,12 @@ const ZONE_LABELS = {
   'synthese-taken': 'Synthese taken',
   'feedback-afspraken': 'Feedback afspraken',
   'checkout': 'Check-out',
+  'id-praktijk': 'Identiteit — wij zijn een praktijk die...',
+  'id-rol': 'Identiteit — onze rol in Utrecht',
+  'z2-kern': 'Zorginhoud — kernzorg',
+  'z2-mits': 'Zorginhoud — ja, mits',
+  'z2-leuk': 'Zorginhoud — omdat we het leuk vinden',
+  'z2-niet': 'Zorginhoud — bewust niet',
 };
 const VOTE_ICONS = { up: '👍', side: '🤷', down: '👎' };
 
