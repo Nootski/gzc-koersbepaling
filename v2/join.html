@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Koersbepaling — Deelnemer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@300;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared.css">
+<style>
+html, body { height: 100dvh; overflow: hidden; }
+body { display: flex; flex-direction: column; }
+
+/* JOIN SCREEN */
+.join-screen {
+  position: fixed; inset: 0; background: var(--primary); z-index: 10000;
+  display: flex; align-items: center; justify-content: center;
+}
+.join-screen.hidden { display: none; }
+.join-box {
+  background: white; border-radius: 24px; padding: 40px 32px; text-align: center;
+  max-width: 380px; width: 92%; box-shadow: 0 24px 64px rgba(0,0,0,0.3);
+}
+.join-box h1 { font-family: 'Fraunces', serif; font-size: 1.6rem; color: var(--primary); margin-bottom: 6px; }
+.join-box p { color: var(--text-secondary); margin-bottom: 24px; font-size: 0.88rem; }
+.name-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.name-btn {
+  padding: 16px 12px; border-radius: 14px; border: 2px solid var(--border);
+  background: white; font-family: 'Inter', sans-serif; font-size: 1rem;
+  font-weight: 600; cursor: pointer; transition: all 0.2s;
+  display: flex; align-items: center; gap: 10px; justify-content: center;
+}
+.name-btn:hover, .name-btn:active { border-color: var(--primary); background: var(--primary-light); }
+.name-btn .dot { width: 16px; height: 16px; border-radius: 50%; flex-shrink: 0; }
+
+/* MOBILE HEADER */
+.m-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 16px; background: var(--primary); color: white; flex-shrink: 0;
+}
+.m-header-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.m-header-name {
+  padding: 3px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 600;
+  display: flex; align-items: center; gap: 5px; flex-shrink: 0;
+}
+.m-header-section {
+  font-size: 0.8rem; font-weight: 500; opacity: 0.85;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.m-dots { display: flex; gap: 3px; }
+.m-dot-mini {
+  width: 20px; height: 20px; border-radius: 50%; font-size: 0.5rem; font-weight: 700;
+  color: white; display: flex; align-items: center; justify-content: center;
+  opacity: 0.4; border: 1.5px solid rgba(255,255,255,0.3);
+}
+.m-dot-mini.online { opacity: 1; border-color: white; }
+
+/* CONTENT */
+.m-content {
+  flex: 1; overflow-y: auto; padding: 16px; scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
+}
+.m-content .section-title { font-size: 1.4rem; }
+.m-content .section-subtitle { font-size: 0.85rem; margin-bottom: 16px; }
+.m-content .card { padding: 16px; }
+
+/* MOBILE VOTE BUTTONS */
+.m-vote-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 12px; margin-bottom: 6px; }
+.m-vote-btn {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 14px 6px 10px; border-radius: 14px; border: 2px solid var(--border);
+  background: white; cursor: pointer; font-size: 1.3rem;
+  transition: all 0.15s; touch-action: manipulation; user-select: none;
+}
+.m-vote-btn.selected[data-dir="up"] { border-color: var(--green); background: var(--green-light); }
+.m-vote-btn.selected[data-dir="side"] { border-color: var(--yellow); background: var(--yellow-light); }
+.m-vote-btn.selected[data-dir="down"] { border-color: var(--red); background: var(--red-light); }
+.m-vote-btn .m-count { font-size: 0.8rem; font-weight: 700; color: var(--text-secondary); }
+.m-vote-btn .voter-dots { display: flex; gap: 2px; flex-wrap: wrap; justify-content: center; min-height: 16px; }
+
+/* MOBILE STELLING */
+.m-stelling { margin-bottom: 16px; }
+.m-stelling-text { font-size: 0.9rem; line-height: 1.5; }
+
+/* MOBILE STICKIES */
+.m-sticky-list { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+.m-sticky-item {
+  padding: 12px; border-radius: 10px; box-shadow: 1px 1px 4px rgba(0,0,0,0.08);
+}
+.m-sticky-item .sticky-author { font-size: 0.65rem; font-weight: 700; margin-bottom: 4px; }
+.m-sticky-item textarea {
+  width: 100%; border: none; background: transparent;
+  font-family: 'Inter', sans-serif; font-size: 0.85rem; resize: none; outline: none;
+  min-height: 40px; line-height: 1.4;
+}
+.m-sticky-item .sticky-delete {
+  float: right; background: none; border: none;
+  font-size: 0.75rem; cursor: pointer; opacity: 0.3;
+}
+.m-sticky-add {
+  padding: 14px; border: 2px dashed var(--border); border-radius: 10px;
+  text-align: center; cursor: pointer; font-size: 0.85rem; color: var(--text-secondary);
+  transition: all 0.2s;
+}
+.m-sticky-add:active { border-color: var(--primary); color: var(--primary); }
+
+/* MOBILE PRINCIPLE */
+.m-content .principle-split { grid-template-columns: 1fr; }
+.m-content .principle-card { padding: 14px; }
+.m-content .principle-card textarea { font-size: 0.9rem; min-height: 40px; }
+.m-content .principle-box { padding: 12px 14px; }
+.m-content .principle-input { font-size: 0.9rem; min-height: 38px; }
+
+/* MOBILE TABLES */
+.m-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 -16px; padding: 0 16px; }
+.m-content .smart-table { min-width: 480px; font-size: 0.75rem; }
+.m-content .mini-smart { min-width: 420px; font-size: 0.72rem; }
+
+/* WAITING */
+.m-waiting {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  min-height: 50vh; text-align: center; padding: 40px 20px;
+}
+.m-waiting-icon { font-size: 3rem; margin-bottom: 16px; }
+.m-waiting-text { font-family: 'Fraunces', serif; font-size: 1.4rem; color: var(--primary); }
+.m-waiting-sub { font-size: 0.9rem; color: var(--text-secondary); margin-top: 8px; }
+
+@media (max-width: 360px) {
+  .m-vote-btn { padding: 10px 4px 8px; font-size: 1.1rem; }
+  .m-content .section-title { font-size: 1.2rem; }
+  .name-btn { padding: 12px 8px; font-size: 0.9rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- JOIN SCREEN -->
+<div class="join-screen" id="joinScreen">
+  <div class="join-box">
+    <h1>Koersbepaling</h1>
+    <p>Wie ben jij?</p>
+    <div class="name-grid" id="nameGrid"></div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<div class="m-header">
+  <div class="m-header-left">
+    <div class="m-header-name" id="myNameBadge" style="display:none;">
+      <span class="dot" id="myDot" style="width:10px;height:10px;border-radius:50%;"></span>
+      <span id="myNameLabel"></span>
+    </div>
+    <div class="m-header-section" id="mHeaderSection">Welkom</div>
+  </div>
+  <div class="m-dots" id="participantDots"></div>
+</div>
+
+<!-- CONTENT -->
+<div class="m-content" id="mContent"></div>
+
+<script src="shared.js"></script>
+<script>
+let currentSlideId = 'welkom';
+
+// Build join screen
+const grid = document.getElementById('nameGrid');
+Object.entries(PARTICIPANTS).forEach(([name, color]) => {
+  const btn = document.createElement('button');
+  btn.className = 'name-btn';
+  btn.innerHTML = `<span class="dot" style="background:${color}"></span>${name}`;
+  btn.onclick = () => doJoin(name, color);
+  grid.appendChild(btn);
+});
+
+function doJoin(name, color) {
+  joinSession(name);
+  document.getElementById('joinScreen').classList.add('hidden');
+  document.getElementById('myNameBadge').style.display = 'flex';
+  document.getElementById('myDot').style.background = color;
+  document.getElementById('myNameLabel').textContent = name;
+  renderSlide(currentSlideId);
+}
+
+// Auto-resume
+const saved = localStorage.getItem('v2-name');
+if (saved && PARTICIPANTS[saved]) {
+  doJoin(saved, PARTICIPANTS[saved]);
+}
+
+// Section definitions (mobile-optimized)
+function mStelling(id, text) {
+  return `<div class="m-stelling" id="stelling-${id}">
+    <div class="m-stelling-text">${text}</div>
+    <div class="m-vote-row">
+      <button class="m-vote-btn vote-btn" data-dir="up" onclick="castVote('${id}','up')">
+        👍<span class="m-count vote-count" id="vc-${id}-up">0</span>
+        <div class="voter-dots" id="va-${id}-up"></div>
+      </button>
+      <button class="m-vote-btn vote-btn" data-dir="side" onclick="castVote('${id}','side')">
+        🤷<span class="m-count vote-count" id="vc-${id}-side">0</span>
+        <div class="voter-dots" id="va-${id}-side"></div>
+      </button>
+      <button class="m-vote-btn vote-btn" data-dir="down" onclick="castVote('${id}','down')">
+        👎<span class="m-count vote-count" id="vc-${id}-down">0</span>
+        <div class="voter-dots" id="va-${id}-down"></div>
+      </button>
+    </div>
+  </div>`;
+}
+
+function mStickyZone(zoneId, defaultColor) {
+  const c = STICKY_COLORS[defaultColor] || STICKY_COLORS.yellow;
+  return `<div class="m-sticky-list" id="zone-${zoneId}" data-zone="${zoneId}" data-color="${c}">
+    <div class="m-sticky-add" onclick="mAddSticky('${zoneId}','${c}')">+ Voeg sticky toe</div>
+  </div>`;
+}
+
+function mPrinciple(id, placeholder) {
+  return `<div class="principle-box">
+    <label>Streefuitkomst</label>
+    <textarea class="principle-input" data-sync="principle-${id}" placeholder="${placeholder}"
+      oninput="doUpdateText(this.dataset.sync,this.value)"
+      onblur="doFlushText(this.dataset.sync,this.value)"></textarea>
+  </div>`;
+}
+
+function mTextInput(syncId, placeholder) {
+  return `<input type="text" data-sync="${syncId}" placeholder="${placeholder}" style="width:100%;border:none;background:transparent;font-size:0.82rem;padding:3px 0;outline:none;"
+    oninput="doUpdateText(this.dataset.sync,this.value)"
+    onblur="doFlushText(this.dataset.sync,this.value)">`;
+}
+
+const slides = {
+  welkom: () => `
+    <div class="section-badge">Opening</div>
+    <div class="section-title">Welkom</div>
+    <div class="section-subtitle">De sessie begint zo. Wacht op de facilitator.</div>
+    <div class="card">
+      <div class="card-title">⏱ Dagprogramma</div>
+      <div class="m-table-wrap"><table class="smart-table">
+        <tr><th>Tijd</th><th>Onderdeel</th><th>Duur</th></tr>
+        <tr><td>13:00–13:15</td><td>Welkom</td><td>15 min</td></tr>
+        <tr><td>13:15–13:45</td><td>Check-in</td><td>30 min</td></tr>
+        <tr><td>13:45–14:15</td><td>Organisatie</td><td>30 min</td></tr>
+        <tr><td>14:15–14:45</td><td>Medewerkers</td><td>30 min</td></tr>
+        <tr><td>14:45–15:10</td><td><em>Pauze</em></td><td>25 min</td></tr>
+        <tr><td>15:10–15:40</td><td>Kansen & bedreigingen</td><td>30 min</td></tr>
+        <tr><td>15:40–16:25</td><td>Synthese</td><td>45 min</td></tr>
+        <tr><td>16:25–16:55</td><td>Feedback & Afsluiting</td><td>30 min</td></tr>
+      </table></div>
+    </div>`,
+
+  checkin: () => `
+    <div class="section-badge">Opening</div>
+    <div class="section-title">Persoonlijke Check-in</div>
+    <div class="section-subtitle">Max. 3 minuten per persoon.</div>
+    <div class="card">
+      <div class="card-title">📝 De vijf vragen</div>
+      <div style="font-size:0.85rem;line-height:2;">
+        <div>1. Hoe zit jij er nu in — wat geeft je energie?</div>
+        <div>2. Wat is voor jou een energie-drain?</div>
+        <div>3. Wat heb jij van de maatschap nodig?</div>
+        <div>4. Hoe ziet jouw ideale werkdag eruit?</div>
+        <div>5. Wat zou je de maatschap willen vragen dat je nu nog niet vraagt?</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">🔖 Terugkerende thema's</div>
+      ${mStickyZone('checkin-themes', 'yellow')}
+    </div>`,
+
+  organisatie: () => `
+    <div class="section-badge">Domein 4</div>
+    <div class="section-title">Organisatie & processen</div>
+    <div class="section-subtitle">Stem op de stellingen.</div>
+    <div class="card">
+      ${mStelling('o-l1', 'Wij zijn een reactieve praktijk — we blussen brandjes in plaats van ze te voorkomen.')}
+      ${mStelling('o-l2', 'Onze pragmatische aanpak werkt prima — we hoeven geen groot plan om goede zorg te leveren.')}
+      ${mStelling('o-l3', 'We bezuinigen op plekken waar we eigenlijk zouden moeten investeren.')}
+      ${mStelling('o-l4', 'Met slimmere IT-keuzes zouden we merkbaar meer tijd overhouden voor de patiënt.')}
+      ${mStelling('o-l5', 'Er zit meer werkplezier in deze praktijk dan we er nu uithalen.')}
+      ${mStelling('o-l6', 'Als we nu de juiste organisatorische keuzes maken, kunnen we over twee jaar een wezenlijk betere praktijk zijn.')}
+      ${mStelling('o-l7', 'We zijn duurzaam, maar het mag geen geld kosten.')}
+      ${mStelling('o-l8', 'Onze dagstructuur klopt.')}
+    </div>
+    <div class="card">
+      <div class="card-title">🟠 Spanningspunten</div>
+      ${mStickyZone('org-spanningen-l', 'orange')}
+    </div>
+    <div class="card">
+      <div class="card-title">📝 Principes</div>
+      <div class="principle-split">
+        <div class="principle-card org">
+          <label>⚙️ Organisatieprincipe</label>
+          <textarea placeholder="Wij organiseren onze praktijk zo dat..." data-sync="principle-org-org-l"
+            oninput="doUpdateText(this.dataset.sync,this.value)" onblur="doFlushText(this.dataset.sync,this.value)"></textarea>
+        </div>
+        <div class="principle-card fin">
+          <label>💰 Financieel principe</label>
+          <textarea placeholder="Financieel sturen wij op..." data-sync="principle-org-fin-l"
+            oninput="doUpdateText(this.dataset.sync,this.value)" onblur="doFlushText(this.dataset.sync,this.value)"></textarea>
+        </div>
+      </div>
+    </div>`,
+
+  medewerkers: () => `
+    <div class="section-badge">Domein 5</div>
+    <div class="section-title">Medewerkers</div>
+    <div class="section-subtitle">Wat voor werkgever willen we zijn?</div>
+    <div class="card">
+      <div class="card-title">💬 Reflectievragen</div>
+      <div style="font-size:0.85rem;line-height:2;">
+        <div>1. Wat voor werkgever willen we zijn?</div>
+        <div>2. Geven wij voldoende ruimte en vertrouwen?</div>
+        <div>3. Hoe houden we ons team scherp en geïnspireerd?</div>
+        <div>4. Inclusiviteit of gelijkgestemden?</div>
+        <div>5. Hoe herkennen we dat iemand niet op de juiste plek zit?</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">🟠 Jouw antwoorden</div>
+      ${mStickyZone('mw-lang', 'orange')}
+    </div>
+    <div class="card">
+      <div class="card-title">📝 Principes</div>
+      <div class="principle-split">
+        <div class="principle-card mw-wg">
+          <label>👥 Wij geven</label>
+          <textarea placeholder="Wij bieden onze medewerkers..." data-sync="principle-mw-wg"
+            oninput="doUpdateText(this.dataset.sync,this.value)" onblur="doFlushText(this.dataset.sync,this.value)"></textarea>
+        </div>
+        <div class="principle-card mw-on">
+          <label>🎯 Wij verwachten</label>
+          <textarea placeholder="Van onze medewerkers verwachten wij..." data-sync="principle-mw-on"
+            oninput="doUpdateText(this.dataset.sync,this.value)" onblur="doFlushText(this.dataset.sync,this.value)"></textarea>
+        </div>
+      </div>
+    </div>`,
+
+  pauze: () => `
+    <div class="pauze-screen">
+      <div class="pauze-icon">☕</div>
+      <div class="pauze-title">Pauze</div>
+      <div class="pauze-sub">14:45–15:10 · 25 minuten</div>
+    </div>`,
+
+  kansen: () => `
+    <div class="section-badge">Domein 6</div>
+    <div class="section-title">Kansen & bedreigingen</div>
+    <div class="section-subtitle">Intern en extern.</div>
+    <div class="card">
+      <div style="font-size:0.78rem;font-weight:600;text-transform:uppercase;color:var(--primary);margin-bottom:8px;">🏠 Intern</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div><strong style="font-size:0.7rem;color:var(--green);">🟢 Kansen</strong>${mStickyZone('k2-int-kansen', 'green')}</div>
+        <div><strong style="font-size:0.7rem;color:var(--red);">🔴 Bedreigingen</strong>${mStickyZone('k2-int-bedreig', 'pink')}</div>
+      </div>
+      <div style="font-size:0.78rem;font-weight:600;text-transform:uppercase;color:var(--primary);margin:16px 0 8px;">🌍 Extern</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div><strong style="font-size:0.7rem;color:var(--green);">🟢 Kansen</strong>${mStickyZone('k2-ext-kansen', 'green')}</div>
+        <div><strong style="font-size:0.7rem;color:var(--red);">🔴 Bedreigingen</strong>${mStickyZone('k2-ext-bedreig', 'pink')}</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">📝 Principes</div>
+      <div class="principle-split">
+        <div class="principle-card kb-int">
+          <label>🏠 Intern principe</label>
+          <textarea placeholder="Binnen onze maatschap pakken wij kansen door..." data-sync="principle-kb-int"
+            oninput="doUpdateText(this.dataset.sync,this.value)" onblur="doFlushText(this.dataset.sync,this.value)"></textarea>
+        </div>
+        <div class="principle-card kb-ext">
+          <label>🌍 Extern principe</label>
+          <textarea placeholder="Op externe ontwikkelingen reageren wij door..." data-sync="principle-kb-ext"
+            oninput="doUpdateText(this.dataset.sync,this.value)" onblur="doFlushText(this.dataset.sync,this.value)"></textarea>
+        </div>
+      </div>
+    </div>`,
+
+  synthese: () => `
+    <div class="section-badge">Kern van de dag</div>
+    <div class="section-title">Synthese</div>
+    <div class="card">
+      <div class="card-title">📌 Principes</div>
+      ${mPrinciple('synthese-principes', 'Alle principes (6–8 stuks)')}
+    </div>
+    <div class="card">
+      <div class="card-title">📋 Taakverdeling</div>
+      ${mStickyZone('synthese-taken', 'yellow')}
+    </div>
+    <div class="card">
+      <div class="card-title">🎯 SMART-actiepunten</div>
+      <div class="m-table-wrap"><table class="smart-table">
+        <tr><th>#</th><th>Actiepunt</th><th>Eigenaar</th><th>Deadline</th></tr>
+        ${[1,2,3,4,5,6,7,8].map(i => `<tr><td>${i}</td><td>${mTextInput('smart-actie-'+i, '...')}</td><td>${mTextInput('smart-eig-'+i, '...')}</td><td>${mTextInput('smart-dl-'+i, '...')}</td></tr>`).join('')}
+      </table></div>
+    </div>
+    <div class="card">
+      <div class="card-title">🔄 Evaluatie</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div class="principle-box"><label>Datum</label><input type="text" class="principle-input" style="min-height:28px;" placeholder="bijv. 16 juni" data-sync="eval-datum"
+          oninput="doUpdateText(this.dataset.sync,this.value)" onblur="doFlushText(this.dataset.sync,this.value)"></div>
+        <div class="principle-box"><label>Bewaker</label><input type="text" class="principle-input" style="min-height:28px;" placeholder="Naam..." data-sync="eval-bewaker"
+          oninput="doUpdateText(this.dataset.sync,this.value)" onblur="doFlushText(this.dataset.sync,this.value)"></div>
+      </div>
+    </div>`,
+
+  feedback: () => `
+    <div class="section-badge">Afronding</div>
+    <div class="section-title">Feedbackafspraken</div>
+    <div class="card">
+      <div class="card-title">📝 Onze afspraken</div>
+      ${mStickyZone('feedback-afspraken', 'yellow')}
+      ${mPrinciple('feedback-principle', 'Feedbackafspraken (min. 2)')}
+    </div>`,
+
+  afsluiting: () => `
+    <div class="section-badge">Afsluiting</div>
+    <div class="section-title">Check-out</div>
+    <div class="section-subtitle">Wat neem jij mee?</div>
+    <div class="card">
+      <div class="card-title">🗣 Jouw antwoord</div>
+      ${mStickyZone('checkout', 'yellow')}
+    </div>`,
+};
+
+const slideNames = {
+  welkom: '🏠 Welkom', checkin: '💬 Check-in', organisatie: '⚙️ Organisatie',
+  medewerkers: '👥 Medewerkers', pauze: '☕ Pauze', kansen: '🔭 Kansen',
+  synthese: '🎯 Synthese', feedback: '🔁 Feedback', afsluiting: '✨ Afsluiting'
+};
+
+function renderSlide(id) {
+  currentSlideId = id;
+  const fn = slides[id];
+  const el = document.getElementById('mContent');
+  if (fn) {
+    el.innerHTML = fn();
+  } else {
+    el.innerHTML = `<div class="m-waiting"><div class="m-waiting-icon">📋</div><div class="m-waiting-text">${id}</div><div class="m-waiting-sub">Dit onderdeel wordt op het scherm getoond.</div></div>`;
+  }
+  el.scrollTop = 0;
+  document.getElementById('mHeaderSection').textContent = slideNames[id] || id;
+  restoreAll();
+}
+
+function restoreAll() {
+  // Votes
+  for (const [sid] of Object.entries(state.votes || {})) updateVoteDisplay(sid);
+  // Stickies
+  for (const [zoneId, stickies] of Object.entries(state.stickies || {})) {
+    for (const [sId, data] of Object.entries(stickies)) addStickyToDOM(zoneId, sId, data);
+  }
+  // Texts
+  for (const [id, value] of Object.entries(state.texts || {})) {
+    const el = document.querySelector(`[data-sync="${id}"]`);
+    if (el && el.value !== value) el.value = value;
+  }
+  updateParticipantDots();
+}
+
+function mAddSticky(zoneId, color) {
+  const sId = doAddSticky(zoneId, color);
+  // DOM will update via SSE
+}
+
+function addStickyToDOM(zoneId, stickyId, data) {
+  const zone = document.getElementById(`zone-${zoneId}`);
+  if (!zone) return;
+  if (zone.querySelector(`[data-sticky-id="${stickyId}"]`)) return;
+  const addBtn = zone.querySelector('.m-sticky-add');
+  const item = document.createElement('div');
+  item.className = 'm-sticky-item';
+  item.dataset.stickyId = stickyId;
+  item.style.background = data.color;
+  const isOwn = data.author === myName;
+  item.innerHTML = `
+    <div class="sticky-author" style="color:${PARTICIPANTS[data.author]||'#666'}">${data.author||''}</div>
+    ${isOwn ? `<button class="sticky-delete" onclick="mDeleteSticky('${zoneId}','${stickyId}')">✕</button>` : ''}
+    <textarea placeholder="Type hier..." ${isOwn ? '' : 'readonly'} oninput="doUpdateSticky('${zoneId}','${stickyId}',this.value)">${data.text||''}</textarea>`;
+  if (addBtn) zone.insertBefore(item, addBtn);
+  else zone.appendChild(item);
+  if (isOwn && !data.text) item.querySelector('textarea')?.focus();
+}
+
+function mDeleteSticky(zone, id) {
+  doDeleteSticky(zone, id);
+  const el = document.querySelector(`[data-sticky-id="${id}"]`);
+  if (el) el.remove();
+}
+
+// SSE handlers
+onStateChange = function(type, data) {
+  if (type === 'init') { renderSlide(state.currentSlide); return; }
+  if (type === 'vote' || type === 'unvote') updateVoteDisplay(data.id);
+  if (type === 'sticky_add') addStickyToDOM(data.zone, data.id, data);
+  if (type === 'sticky_update') {
+    const el = document.querySelector(`[data-sticky-id="${data.id}"] textarea`);
+    if (el && document.activeElement !== el) el.value = data.text;
+  }
+  if (type === 'sticky_delete') {
+    const el = document.querySelector(`[data-sticky-id="${data.id}"]`);
+    if (el) el.remove();
+  }
+  if (type === 'text') {
+    const el = document.querySelector(`[data-sync="${data.id}"]`);
+    if (el && document.activeElement !== el) el.value = data.value;
+  }
+  if (type === 'join' || type === 'heartbeat') updateParticipantDots();
+};
+
+onSlideChange = function(slideId) {
+  if (slideId !== currentSlideId) renderSlide(slideId);
+};
+
+connectSSE();
+</script>
+</body>
+</html>

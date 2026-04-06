@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Koersbepaling v2 — Facilitator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared.css">
+<style>
+html, body { height: 100vh; overflow: hidden; }
+body { display: flex; flex-direction: column; }
+
+/* PROGRESS */
+.progress-bar { height: 3px; background: rgba(255,255,255,0.15); flex-shrink: 0; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, #81C784, #FFB74D, #FF7043); transition: width 0.3s; }
+
+/* MAIN LAYOUT */
+.main { display: flex; flex: 1; overflow: hidden; }
+.sidebar {
+  width: 230px; background: var(--bg-card); border-right: 1px solid var(--border);
+  overflow-y: auto; flex-shrink: 0; padding: 12px 0;
+}
+.sidebar-item {
+  display: flex; align-items: center; gap: 8px; padding: 9px 16px; cursor: pointer;
+  transition: all 0.2s; font-size: 0.78rem; color: var(--text-secondary);
+  border-left: 3px solid transparent;
+}
+.sidebar-item:hover { background: var(--primary-light); color: var(--primary); }
+.sidebar-item.active { background: var(--primary-light); color: var(--primary); font-weight: 600; border-left-color: var(--primary); }
+.sidebar-icon {
+  width: 24px; height: 24px; border-radius: 6px; display: flex; align-items: center;
+  justify-content: center; font-size: 0.8rem; flex-shrink: 0; background: var(--bg);
+}
+.sidebar-item.active .sidebar-icon { background: var(--primary); color: white; }
+.sidebar-time { margin-left: auto; font-size: 0.65rem; opacity: 0.5; white-space: nowrap; }
+
+/* CONTENT */
+.content { flex: 1; overflow-y: auto; padding: 32px 48px; scroll-behavior: smooth; }
+.content::-webkit-scrollbar { width: 5px; }
+.content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* VOTE BTN sizing */
+.vote-btn { width: 48px; height: 42px; }
+.vote-btn .voter-dots { min-height: 14px; }
+
+/* TIMER */
+.topbar-timer { display: flex; align-items: center; gap: 8px; }
+.timer-display {
+  font-family: 'Fraunces', serif; font-size: 1.8rem; font-weight: 700;
+  min-width: 90px; text-align: center; line-height: 1;
+}
+.timer-display.warning { color: #FFB74D; }
+.timer-display.danger { animation: pulse 1s ease-in-out infinite; color: #FF7043; }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+.timer-btn {
+  background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25);
+  color: white; padding: 5px 10px; border-radius: 6px; font-size: 0.7rem;
+  font-weight: 600; cursor: pointer; transition: background 0.2s;
+}
+.timer-btn:hover { background: rgba(255,255,255,0.25); }
+.timer-btn.active { background: var(--accent); border-color: var(--accent); }
+
+/* NAV */
+.nav-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 24px; background: var(--bg-card); border-top: 1px solid var(--border); flex-shrink: 0;
+}
+.nav-btn {
+  display: flex; align-items: center; gap: 6px; padding: 8px 20px; border-radius: 8px;
+  border: 2px solid var(--primary); background: white; color: var(--primary);
+  font-family: 'Inter', sans-serif; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.2s;
+}
+.nav-btn:hover { background: var(--primary-light); }
+.nav-btn.primary { background: var(--primary); color: white; }
+.nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+.nav-dots { display: flex; gap: 5px; }
+.nav-dot {
+  width: 7px; height: 7px; border-radius: 50%; background: var(--border); cursor: pointer; transition: all 0.2s;
+}
+.nav-dot.active { background: var(--primary); transform: scale(1.3); }
+
+/* BEEP */
+.beep-overlay {
+  display: none; position: fixed; inset: 0; background: rgba(193,105,79,0.92);
+  z-index: 9999; flex-direction: column; align-items: center; justify-content: center;
+  color: white; cursor: pointer;
+}
+.beep-overlay.show { display: flex; }
+.beep-overlay .beep-text { font-family: 'Fraunces', serif; font-size: 2.5rem; font-weight: 700; margin-bottom: 10px; }
+.beep-overlay .beep-sub { font-size: 1rem; opacity: 0.8; }
+
+/* SPOOR */
+.spoor-toggle {
+  display: flex; border-radius: 8px; overflow: hidden; border: 2px solid var(--primary); width: fit-content; margin-bottom: 20px;
+}
+.spoor-btn {
+  padding: 8px 20px; border: none; cursor: pointer; font-family: 'Inter', sans-serif;
+  font-size: 0.8rem; font-weight: 600; background: white; color: var(--primary); transition: all 0.2s;
+}
+.spoor-btn.active { background: var(--primary); color: white; }
+.spoor-content { display: none; }
+.spoor-content.active { display: block; }
+
+/* RESPONSIVE */
+@media (max-width: 1024px) {
+  .sidebar { width: 180px; }
+  .sidebar-time { display: none; }
+  .content { padding: 24px 28px; }
+}
+@media (max-width: 900px) {
+  .sidebar { display: none; }
+  .content { padding: 20px; }
+  .section-title { font-size: 1.6rem; }
+}
+@media (max-width: 768px) {
+  .content [style*="grid-template-columns"] { grid-template-columns: 1fr !important; }
+  .topbar { padding: 8px 14px; flex-wrap: wrap; gap: 6px; }
+  .content { padding: 16px; }
+  .stelling { flex-wrap: wrap; }
+  .vote-btns { width: 100%; gap: 6px; }
+  .vote-btn { width: 52px; height: 36px; flex-direction: row; gap: 4px; }
+  .principle-split { grid-template-columns: 1fr; }
+  .sticky-note { width: 130px; min-height: 85px; }
+  .sticky-add { width: 130px; min-height: 85px; }
+}
+</style>
+</head>
+<body>
+
+<div class="beep-overlay" id="beepOverlay" onclick="dismissBeep()">
+  <div class="beep-text">Tijd is om!</div>
+  <div class="beep-sub">Klik om door te gaan</div>
+</div>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <div>
+      <div class="topbar-title">Koersbepaling v2</div>
+      <div class="topbar-section" id="topbarSection">Welkom</div>
+    </div>
+  </div>
+  <div class="participant-dots" id="participantDots"></div>
+  <div class="topbar-timer">
+    <button class="timer-btn" onclick="setTimer(15)">15m</button>
+    <button class="timer-btn" onclick="setTimer(20)">20m</button>
+    <button class="timer-btn" onclick="setTimer(25)">25m</button>
+    <button class="timer-btn" onclick="setTimer(30)">30m</button>
+    <button class="timer-btn" onclick="setTimer(45)">45m</button>
+    <div class="timer-display" id="timerDisplay">--:--</div>
+    <button class="timer-btn" id="timerToggle" onclick="toggleTimer()">Start</button>
+    <button class="timer-btn" onclick="resetTimer()">Reset</button>
+  </div>
+</div>
+<div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+
+<div class="main">
+  <div class="sidebar" id="sidebar"></div>
+  <div class="content" id="content"></div>
+</div>
+
+<div class="nav-bar">
+  <button class="nav-btn" id="prevBtn" onclick="nav(-1)">← Vorige</button>
+  <div class="nav-dots" id="navDots"></div>
+  <button class="nav-btn primary" id="nextBtn" onclick="nav(1)">Volgende →</button>
+</div>
+
+<script src="shared.js"></script>
+<script>
+let currentSection = 0;
+let timerSeconds = 0, timerRunning = false, timerInterval = null, timerOriginal = 0;
+
+function stickyZone(zoneId, defaultColor) {
+  const c = STICKY_COLORS[defaultColor] || STICKY_COLORS.yellow;
+  return `<div class="sticky-zone" id="zone-${zoneId}" data-zone="${zoneId}" data-color="${c}">
+    <div class="sticky-add" onclick="fAddSticky('${zoneId}','${c}')">+</div>
+  </div>`;
+}
+
+function stelling(id, text) {
+  return `<div class="stelling" id="stelling-${id}">
+    <div class="stelling-text">${text}</div>
+    <div class="vote-btns">
+      <button class="vote-btn" data-dir="up">👍<span class="vote-count" id="vc-${id}-up">0</span><div class="voter-dots" id="va-${id}-up"></div></button>
+      <button class="vote-btn" data-dir="side">🤷<span class="vote-count" id="vc-${id}-side">0</span><div class="voter-dots" id="va-${id}-side"></div></button>
+      <button class="vote-btn" data-dir="down">👎<span class="vote-count" id="vc-${id}-down">0</span><div class="voter-dots" id="va-${id}-down"></div></button>
+    </div>
+  </div>`;
+}
+
+function principleBox(id, placeholder) {
+  return `<div class="principle-box"><label>Streefuitkomst</label>
+    <textarea class="principle-input" data-sync="principle-${id}" placeholder="${placeholder}"
+      oninput="doUpdateText(this.dataset.sync,this.value)" onblur="doFlushText(this.dataset.sync,this.value)"></textarea></div>`;
+}
+
+function outcomeBox(text) {
+  return `<div class="outcome-box"><span class="outcome-icon">🎯</span><div class="outcome-text">${text}</div></div>`;
+}
+
+function spoorToggle(id, kort, uitgebreid) {
+  return `<div class="card"><div class="spoor-toggle">
+    <button class="spoor-btn active" onclick="switchSpoor('${id}','kort',this)">⚡ Kort</button>
+    <button class="spoor-btn" onclick="switchSpoor('${id}','uitgebreid',this)">◎ Uitgebreid</button>
+  </div>
+  <div class="spoor-content active" id="spoor-${id}-kort">${kort}</div>
+  <div class="spoor-content" id="spoor-${id}-uitgebreid">${uitgebreid}</div></div>`;
+}
+
+function syncInput(id, placeholder, tag) {
+  if (tag === 'textarea') return `<textarea data-sync="${id}" placeholder="${placeholder}" oninput="doUpdateText(this.dataset.sync,this.value)" onblur="doFlushText(this.dataset.sync,this.value)"></textarea>`;
+  return `<input type="text" data-sync="${id}" placeholder="${placeholder}" oninput="doUpdateText(this.dataset.sync,this.value)" onblur="doFlushText(this.dataset.sync,this.value)">`;
+}
+
+// ===== SECTIONS (same as v1 but with v2 vote display) =====
+const sections = [
+{
+  id:'welkom', icon:'🏠', title:'Welkom', time:'13:00–13:15', minutes:15,
+  render: () => `
+    <div class="section-badge">Opening</div>
+    <div class="section-title">Welkom bij de Koersbepaling</div>
+    <div class="section-subtitle">6 maten · 13:00–17:00</div>
+    <div class="card"><div class="card-title">⏱ Dagprogramma</div>
+      <table class="smart-table">
+        <tr><th>Tijd</th><th>Onderdeel</th><th>Duur</th></tr>
+        <tr><td>13:00–13:15</td><td>Welkom</td><td>15 min</td></tr>
+        <tr><td>13:15–13:45</td><td>Check-in</td><td>30 min</td></tr>
+        <tr><td>13:45–14:15</td><td>Organisatie</td><td>30 min</td></tr>
+        <tr><td>14:15–14:45</td><td>Medewerkers</td><td>30 min</td></tr>
+        <tr><td>14:45–15:10</td><td><em>Pauze</em></td><td>25 min</td></tr>
+        <tr><td>15:10–15:40</td><td>Kansen & bedreigingen</td><td>30 min</td></tr>
+        <tr><td>15:40–16:25</td><td>Synthese</td><td>45 min</td></tr>
+        <tr><td>16:25–16:55</td><td>Feedback & Afsluiting</td><td>30 min</td></tr>
+      </table>
+    </div>
+    <div class="reminder"><span class="reminder-icon">📱</span><div>Deelnemers kunnen meedoen op hun telefoon via <strong>/v2/join</strong></div></div>`
+},
+{
+  id:'checkin', icon:'💬', title:'Check-in', time:'13:15–13:45', minutes:30,
+  render: () => `
+    <div class="section-badge">Opening</div>
+    <div class="section-title">Persoonlijke Check-in</div>
+    <div class="section-subtitle">Max. 3 minuten per persoon. De rest luistert.</div>
+    <div class="card"><div class="card-title">📝 De vijf vragen</div>
+      <div class="checkin-grid">
+        <div class="checkin-q"><div class="q-num">1</div><div class="q-text">Hoe zit jij er nu in — wat geeft je energie?</div></div>
+        <div class="checkin-q"><div class="q-num">2</div><div class="q-text">Wat is voor jou een energie-drain?</div></div>
+        <div class="checkin-q"><div class="q-num">3</div><div class="q-text">Wat heb jij van de maatschap nodig?</div></div>
+        <div class="checkin-q"><div class="q-num">4</div><div class="q-text">Hoe ziet jouw ideale werkdag eruit?</div></div>
+        <div class="checkin-q"><div class="q-num">5</div><div class="q-text">Wat zou je de maatschap willen vragen dat je nu nog niet vraagt?</div></div>
+      </div>
+    </div>
+    <div class="card"><div class="card-title">🔖 Terugkerende thema's</div>${stickyZone('checkin-themes', 'yellow')}</div>
+    ${outcomeBox('Gedeeld beeld van waar iedereen staat')}`
+},
+{
+  id:'organisatie', icon:'⚙️', title:'Organisatie', time:'13:45–14:15', minutes:30,
+  render: () => `
+    <div class="section-badge">Domein 4</div>
+    <div class="section-title">Organisatie & processen</div>
+    <div class="section-subtitle">Van triage tot ICT, kwaliteit tot veiligheid.</div>
+    <div class="card">
+      <div class="flow-step" data-step="1"><div class="card-title" style="margin-bottom:4px;">Stem: hoe werken wij eigenlijk?</div>
+        <div class="vote-hint">Iedereen stemt op eigen telefoon.</div></div>
+      <div style="padding-left:40px;">
+        ${stelling('o-l1', 'Wij zijn een reactieve praktijk — we blussen brandjes in plaats van ze te voorkomen.')}
+        ${stelling('o-l2', 'Onze pragmatische aanpak werkt prima — we hoeven geen groot plan om goede zorg te leveren.')}
+        ${stelling('o-l3', 'We bezuinigen op plekken waar we eigenlijk zouden moeten investeren.')}
+        ${stelling('o-l4', 'Met slimmere IT-keuzes zouden we merkbaar meer tijd overhouden voor de patiënt.')}
+        ${stelling('o-l5', 'Er zit meer werkplezier in deze praktijk dan we er nu uithalen.')}
+        ${stelling('o-l6', 'Als we nu de juiste organisatorische keuzes maken, kunnen we over twee jaar een wezenlijk betere praktijk zijn.')}
+        ${stelling('o-l7', 'We zijn duurzaam, maar het mag geen geld kosten.')}
+        ${stelling('o-l8', 'Onze dagstructuur klopt.')}
+      </div>
+      <div class="flow-connector active"></div>
+      <div class="flow-step" data-step="2"><div class="card-title" style="margin-bottom:4px;">Waar zit de spanning?</div></div>
+      <div style="padding-left:40px;">${stickyZone('org-spanningen-l', 'orange')}</div>
+      <div class="flow-connector active"></div>
+      <div class="flow-step" data-step="3"><div class="card-title" style="margin-bottom:4px;">Verbeterpunten</div></div>
+      <div style="padding-left:40px;"><table class="mini-smart">
+        <tr><th>Verbeterpunt</th><th>Eigenaar</th><th>Deadline</th><th>Meting</th></tr>
+        ${[1,2,3].map(i=>`<tr><td>${syncInput('org-vp-'+i,'...')}</td><td>${syncInput('org-vp-eig-'+i,'...')}</td><td>${syncInput('org-vp-dl-'+i,'...')}</td><td>${syncInput('org-vp-meet-'+i,'...')}</td></tr>`).join('')}
+      </table></div>
+      <div class="flow-connector active"></div>
+      <div class="flow-step" data-step="4"><div class="card-title" style="margin-bottom:4px;">Principes</div></div>
+      <div style="padding-left:40px;"><div class="principle-split">
+        <div class="principle-card org"><label>⚙️ Organisatieprincipe</label>
+          <textarea placeholder="Wij organiseren onze praktijk zo dat..." data-sync="principle-org-org-l" oninput="doUpdateText(this.dataset.sync,this.value)" onblur="doFlushText(this.dataset.sync,this.value)"></textarea></div>
+        <div class="principle-card fin"><label>💰 Financieel principe</label>
+          <textarea placeholder="Financieel sturen wij op..." data-sync="principle-org-fin-l" oninput="doUpdateText(this.dataset.sync,this.value)" onblur="doFlushText(this.dataset.sync,this.value)"></textarea></div>
+      </div></div>
+    </div>
+    ${outcomeBox('2–3 verbeterpunten + organisatie- en financieel principe')}`
+},
+{
+  id:'medewerkers', icon:'👥', title:'Medewerkers', time:'14:15–14:45', minutes:30,
+  render: () => `
+    <div class="section-badge">Domein 5</div>
+    <div class="section-title">Medewerkers</div>
+    <div class="section-subtitle">Wat voor werkgever willen we zijn?</div>
+    <div class="card">
+      <div style="background:var(--bg);border-radius:10px;padding:14px 16px;margin-bottom:10px;">
+        <ul style="list-style:none;padding:0;font-size:0.85rem;line-height:2;">
+          <li><strong>1.</strong> Wat voor werkgever willen we zijn?</li>
+          <li><strong>2.</strong> Geven wij voldoende ruimte en vertrouwen?</li>
+          <li><strong>3.</strong> Hoe houden we ons team scherp en geïnspireerd?</li>
+          <li><strong>4.</strong> Inclusiviteit of gelijkgestemden?</li>
+          <li><strong>5.</strong> Hoe herkennen we dat iemand niet op de juiste plek zit?</li>
+        </ul>
+      </div>
+      ${stickyZone('mw-lang', 'orange')}
+    </div>
+    <div class="card"><div class="card-title">📝 Principes</div>
+      <div class="principle-split">
+        <div class="principle-card mw-wg"><label>👥 Wij geven</label>
+          <textarea placeholder="Wij bieden onze medewerkers..." data-sync="principle-mw-wg" oninput="doUpdateText(this.dataset.sync,this.value)" onblur="doFlushText(this.dataset.sync,this.value)"></textarea></div>
+        <div class="principle-card mw-on"><label>🎯 Wij verwachten</label>
+          <textarea placeholder="Van onze medewerkers verwachten wij..." data-sync="principle-mw-on" oninput="doUpdateText(this.dataset.sync,this.value)" onblur="doFlushText(this.dataset.sync,this.value)"></textarea></div>
+      </div>
+    </div>
+    ${outcomeBox('Principe: wat wij geven + wat wij verwachten')}`
+},
+{
+  id:'pauze', icon:'☕', title:'Pauze', time:'14:45–15:10', minutes:25,
+  render: () => `<div class="pauze-screen"><div class="pauze-icon">☕</div><div class="pauze-title">Pauze</div><div class="pauze-sub">14:45–15:10 · 25 minuten</div></div>`
+},
+{
+  id:'kansen', icon:'🔭', title:'Kansen & bedreigingen', time:'15:10–15:40', minutes:30,
+  render: () => `
+    <div class="section-badge">Domein 6</div>
+    <div class="section-title">Kansen & bedreigingen</div>
+    <div class="section-subtitle">Intern en extern.</div>
+    <div class="card">
+      <p style="font-size:0.78rem;font-weight:600;text-transform:uppercase;color:var(--primary);margin-bottom:8px;">🏠 Intern</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <div><strong style="font-size:0.75rem;color:var(--green);">🟢 Kansen</strong>${stickyZone('k2-int-kansen', 'green')}</div>
+        <div><strong style="font-size:0.75rem;color:var(--red);">🔴 Bedreigingen</strong>${stickyZone('k2-int-bedreig', 'pink')}</div>
+      </div>
+      <p style="font-size:0.78rem;font-weight:600;text-transform:uppercase;color:var(--primary);margin:18px 0 8px;">🌍 Extern</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <div><strong style="font-size:0.75rem;color:var(--green);">🟢 Kansen</strong>${stickyZone('k2-ext-kansen', 'green')}</div>
+        <div><strong style="font-size:0.75rem;color:var(--red);">🔴 Bedreigingen</strong>${stickyZone('k2-ext-bedreig', 'pink')}</div>
+      </div>
+    </div>
+    <div class="card"><div class="card-title">📝 Principes</div>
+      <div class="principle-split">
+        <div class="principle-card kb-int"><label>🏠 Intern</label>
+          <textarea placeholder="Binnen onze maatschap..." data-sync="principle-kb-int" oninput="doUpdateText(this.dataset.sync,this.value)" onblur="doFlushText(this.dataset.sync,this.value)"></textarea></div>
+        <div class="principle-card kb-ext"><label>🌍 Extern</label>
+          <textarea placeholder="Op externe ontwikkelingen..." data-sync="principle-kb-ext" oninput="doUpdateText(this.dataset.sync,this.value)" onblur="doFlushText(this.dataset.sync,this.value)"></textarea></div>
+      </div>
+    </div>
+    ${outcomeBox('Intern + extern principe')}`
+},
+{
+  id:'synthese', icon:'🎯', title:'Synthese', time:'15:40–16:25', minutes:45,
+  render: () => `
+    <div class="section-badge">Kern van de dag</div>
+    <div class="section-title">Synthese</div>
+    <div class="card"><div class="card-title">📌 Principes (10 min)</div>
+      ${principleBox('synthese-principes', 'Alle principes (6–8 stuks)')}</div>
+    <div class="card"><div class="card-title">📋 Taakverdeling</div>${stickyZone('synthese-taken', 'yellow')}</div>
+    <div class="card"><div class="card-title">🎯 SMART-actiepunten</div>
+      <table class="smart-table">
+        <tr><th>#</th><th>Actiepunt</th><th>Eigenaar</th><th>Deadline</th><th>Meting</th></tr>
+        ${[1,2,3,4,5,6,7,8].map(i=>`<tr><td>${i}</td><td>${syncInput('smart-actie-'+i,'...')}</td><td>${syncInput('smart-eig-'+i,'...')}</td><td>${syncInput('smart-dl-'+i,'...')}</td><td>${syncInput('smart-meet-'+i,'...')}</td></tr>`).join('')}
+      </table></div>
+    <div class="card"><div class="card-title">🔄 Evaluatie</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <div class="principle-box"><label>Datum evaluatie</label><input type="text" class="principle-input" style="min-height:28px;" data-sync="eval-datum" placeholder="bijv. 16 juni"
+          oninput="doUpdateText(this.dataset.sync,this.value)" onblur="doFlushText(this.dataset.sync,this.value)"></div>
+        <div class="principle-box"><label>Bewaker</label><input type="text" class="principle-input" style="min-height:28px;" data-sync="eval-bewaker" placeholder="Naam..."
+          oninput="doUpdateText(this.dataset.sync,this.value)" onblur="doFlushText(this.dataset.sync,this.value)"></div>
+      </div>
+    </div>
+    ${outcomeBox('6–8 principes + SMART-actiepunten + evaluatiedatum')}`
+},
+{
+  id:'feedback', icon:'🔁', title:'Feedback', time:'16:25–16:40', minutes:15,
+  render: () => `
+    <div class="section-badge">Afronding</div>
+    <div class="section-title">Feedbackafspraken</div>
+    <div class="card"><div class="card-title">💬 Bespreek</div>
+      <ul style="list-style:disc;padding-left:18px;font-size:0.9rem;line-height:2;">
+        <li>Op een vast moment of zodra iets speelt?</li><li>Hoe vaak?</li><li>Wie initieert?</li><li>Wat als feedback niet landt?</li></ul></div>
+    <div class="card"><div class="card-title">📝 Afspraken</div>
+      ${stickyZone('feedback-afspraken', 'yellow')}
+      ${principleBox('feedback-principle', 'Feedbackafspraken (min. 2)')}</div>
+    ${outcomeBox('Min. 2 feedbackafspraken')}`
+},
+{
+  id:'afsluiting', icon:'✨', title:'Afsluiting', time:'16:40–16:55', minutes:15,
+  render: () => `
+    <div class="section-badge">Afsluiting</div>
+    <div class="section-title">Check-out</div>
+    <div class="section-subtitle">Wat neem jij mee?</div>
+    <div class="card"><div class="card-title">🗣 Plak je antwoord</div>${stickyZone('checkout', 'yellow')}</div>
+    <div class="reminder"><span class="reminder-icon">📝</span><div><strong>Direct vastleggen.</strong> Afspraken die niet opgeschreven worden, bestaan niet.</div></div>`
+}
+];
+
+// ===== RENDER =====
+function renderSidebar() {
+  document.getElementById('sidebar').innerHTML = sections.map((s, i) =>
+    `<div class="sidebar-item ${i===currentSection?'active':''}" onclick="goTo(${i})">
+      <div class="sidebar-icon">${s.icon}</div><div>${s.title}</div>
+      <div class="sidebar-time">${s.time}</div></div>`
+  ).join('');
+}
+
+function renderNavDots() {
+  document.getElementById('navDots').innerHTML = sections.map((_, i) =>
+    `<div class="nav-dot ${i===currentSection?'active':''}" onclick="goTo(${i})"></div>`
+  ).join('');
+}
+
+function renderSection(idx) {
+  currentSection = idx;
+  const s = sections[idx];
+  document.getElementById('content').innerHTML = s.render();
+  document.getElementById('content').scrollTop = 0;
+  document.getElementById('topbarSection').textContent = `${s.icon} ${s.title} — ${s.time}`;
+  document.getElementById('prevBtn').disabled = idx === 0;
+  document.getElementById('nextBtn').disabled = idx === sections.length-1;
+  document.getElementById('progressFill').style.width = `${(idx/(sections.length-1))*100}%`;
+  if (s.minutes) setTimer(s.minutes);
+  renderSidebar();
+  renderNavDots();
+  restoreAll();
+  navigateSlide(s.id);
+}
+
+function nav(dir) {
+  const n = currentSection + dir;
+  if (n >= 0 && n < sections.length) renderSection(n);
+}
+function goTo(idx) { renderSection(idx); }
+
+function restoreAll() {
+  for (const [sid] of Object.entries(state.votes || {})) updateVoteDisplay(sid);
+  for (const [zoneId, stickies] of Object.entries(state.stickies || {})) {
+    for (const [sId, data] of Object.entries(stickies)) fAddStickyToDOM(zoneId, sId, data);
+  }
+  for (const [id, value] of Object.entries(state.texts || {})) {
+    const el = document.querySelector(`[data-sync="${id}"]`);
+    if (el && el.value !== value) el.value = value;
+  }
+  updateParticipantDots();
+}
+
+// ===== STICKIES =====
+function fAddSticky(zoneId, color) {
+  doAddSticky(zoneId, color);
+}
+
+function fAddStickyToDOM(zoneId, stickyId, data) {
+  const zone = document.getElementById(`zone-${zoneId}`);
+  if (!zone) return;
+  if (zone.querySelector(`[data-sticky-id="${stickyId}"]`)) return;
+  const addBtn = zone.querySelector('.sticky-add');
+  const note = document.createElement('div');
+  note.className = 'sticky-note';
+  note.dataset.stickyId = stickyId;
+  note.style.background = data.color;
+  note.innerHTML = `
+    <div class="sticky-author" style="color:${PARTICIPANTS[data.author]||'#666'}">${data.author||''}</div>
+    <button class="sticky-delete" onclick="fDelSticky('${zoneId}','${stickyId}')">✕</button>
+    <textarea placeholder="Type hier..." oninput="doUpdateSticky('${zoneId}','${stickyId}',this.value)">${data.text||''}</textarea>`;
+  if (addBtn) zone.insertBefore(note, addBtn);
+  else zone.appendChild(note);
+}
+
+function fDelSticky(zone, id) {
+  doDeleteSticky(zone, id);
+  const el = document.querySelector(`[data-sticky-id="${id}"]`);
+  if (el) el.remove();
+}
+
+// ===== SPOOR =====
+function switchSpoor(id, spoor, btn) {
+  document.getElementById(`spoor-${id}-kort`).classList.toggle('active', spoor==='kort');
+  document.getElementById(`spoor-${id}-uitgebreid`).classList.toggle('active', spoor==='uitgebreid');
+  btn.parentElement.querySelectorAll('.spoor-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// ===== TIMER =====
+function setTimer(min) {
+  timerSeconds = min*60; timerOriginal = timerSeconds;
+  timerRunning = false; clearInterval(timerInterval);
+  updateTimerDisplay();
+  document.getElementById('timerToggle').textContent = 'Start';
+  document.getElementById('timerToggle').classList.remove('active');
+}
+function toggleTimer() {
+  if (timerSeconds<=0 && !timerRunning) return;
+  timerRunning = !timerRunning;
+  const btn = document.getElementById('timerToggle');
+  if (timerRunning) {
+    btn.textContent='Pauze'; btn.classList.add('active');
+    timerInterval = setInterval(() => {
+      timerSeconds--;
+      updateTimerDisplay();
+      if (timerSeconds<=0) { clearInterval(timerInterval); timerRunning=false; btn.textContent='Start'; btn.classList.remove('active'); showBeep(); }
+    }, 1000);
+  } else { clearInterval(timerInterval); btn.textContent='Start'; btn.classList.remove('active'); }
+}
+function resetTimer() {
+  clearInterval(timerInterval); timerRunning=false;
+  timerSeconds=timerOriginal||0; updateTimerDisplay();
+  document.getElementById('timerToggle').textContent='Start';
+  document.getElementById('timerToggle').classList.remove('active');
+}
+function updateTimerDisplay() {
+  const d=document.getElementById('timerDisplay');
+  if (timerSeconds<=0&&timerOriginal===0) { d.textContent='--:--'; d.className='timer-display'; return; }
+  const m=Math.floor(Math.abs(timerSeconds)/60), s=Math.abs(timerSeconds)%60;
+  d.textContent=`${timerSeconds<0?'-':''}${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  d.className='timer-display';
+  if (timerOriginal>0) { const p=timerSeconds/timerOriginal; if(p<=0)d.classList.add('danger'); else if(p<=0.2)d.classList.add('warning'); }
+}
+function showBeep() {
+  document.getElementById('beepOverlay').classList.add('show');
+  try {
+    const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    [0,0.3,0.6].forEach(delay => {
+      const osc=ctx.createOscillator(), gain=ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.frequency.value=880; osc.type='sine';
+      gain.gain.setValueAtTime(0.3,ctx.currentTime+delay);
+      gain.gain.exponentialRampToValueAtTime(0.01,ctx.currentTime+delay+0.2);
+      osc.start(ctx.currentTime+delay); osc.stop(ctx.currentTime+delay+0.25);
+    });
+  } catch(e){}
+}
+function dismissBeep() { document.getElementById('beepOverlay').classList.remove('show'); }
+
+// ===== SSE HANDLERS =====
+onStateChange = function(type, data) {
+  if (type === 'init') {
+    const idx = sections.findIndex(s => s.id === state.currentSlide);
+    if (idx >= 0) { currentSection = idx; }
+    renderSection(currentSection);
+    return;
+  }
+  if (type === 'vote' || type === 'unvote') updateVoteDisplay(data.id);
+  if (type === 'sticky_add') fAddStickyToDOM(data.zone, data.id, data);
+  if (type === 'sticky_update') {
+    const el = document.querySelector(`[data-sticky-id="${data.id}"] textarea`);
+    if (el && document.activeElement !== el) el.value = data.text;
+  }
+  if (type === 'sticky_delete') {
+    const el = document.querySelector(`[data-sticky-id="${data.id}"]`);
+    if (el) el.remove();
+  }
+  if (type === 'text') {
+    const el = document.querySelector(`[data-sync="${data.id}"]`);
+    if (el && document.activeElement !== el) el.value = data.value;
+  }
+  if (type === 'join' || type === 'heartbeat') updateParticipantDots();
+};
+
+// Keyboard nav
+document.addEventListener('keydown', e => {
+  if (e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA') return;
+  if (e.key==='ArrowRight') { e.preventDefault(); nav(1); }
+  if (e.key==='ArrowLeft') { e.preventDefault(); nav(-1); }
+});
+
+connectSSE();
+</script>
+</body>
+</html>
