@@ -20,16 +20,7 @@ SCHEDULE = [
     {"time": "16:40–16:55", "label": "Afsluiting", "minutes": 15},
 ]
 
-GROUND_RULES = [
-    {
-        "title": "Doen, niet alleen praten",
-        "description": "Elk domein sluit af met een tastbare uitkomst. Discussie stopt zodra we kunnen besluiten.",
-    },
-    {
-        "title": "Begin bij onszelf",
-        "description": "De sessie opent met een persoonlijke check-in. Pas als iedereen gehoord is, bouwen we de koers op.",
-    },
-]
+GROUND_RULES = []
 
 # ── CHECK-IN ──
 
