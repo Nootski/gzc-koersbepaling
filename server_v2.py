@@ -149,33 +149,34 @@ class Handler(SimpleHTTPRequestHandler):
             self._handle_sse()
 
         elif path in ("/", ""):
-            self._serve_html("/index.html")
+            self._serve_nocache("/index.html")
 
         elif path == "/join":
-            self._serve_html("/join.html")
+            self._serve_nocache("/join.html")
 
         elif path == "/view":
-            self._serve_html("/view.html")
+            self._serve_nocache("/view.html")
 
         else:
             super().do_GET()
 
-    def _serve_html(self, html_path):
-        """Serve HTML file with no-cache headers."""
-        self.path = html_path
-        f = self.send_head()
-        if f:
-            try:
-                self.wfile.write(f.read())
-            finally:
-                f.close()
-
-    def end_headers(self):
-        if self.path and self.path.endswith(".html"):
-            self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
-            self.send_header("Pragma", "no-cache")
-            self.send_header("Expires", "0")
-        super().end_headers()
+    def _serve_nocache(self, html_path):
+        """Serve HTML with aggressive no-cache headers."""
+        fpath = os.path.join(V2_DIR, html_path.lstrip("/"))
+        try:
+            with open(fpath, "rb") as f:
+                body = f.read()
+        except FileNotFoundError:
+            self.send_error(404)
+            return
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
+        self.send_header("Pragma", "no-cache")
+        self.send_header("Expires", "0")
+        self.end_headers()
+        self.wfile.write(body)
 
     def _handle_sse(self):
         self.send_response(200)
