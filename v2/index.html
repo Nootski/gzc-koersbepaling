@@ -40,9 +40,9 @@ body { display: flex; flex-direction: column; }
 .content::-webkit-scrollbar { width: 5px; }
 .content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
-/* VOTE BTN sizing */
-.vote-btn { width: 48px; height: 42px; }
-.vote-btn .voter-dots { min-height: 14px; }
+/* VOTE BTN sizing (facilitator) */
+.vote-btn { width: 56px; min-height: 56px; height: auto; padding: 6px 2px 4px; }
+.vote-btn .voter-dots { min-height: 16px; }
 
 /* TIMER */
 .topbar-timer { display: flex; align-items: center; gap: 8px; }
@@ -162,7 +162,7 @@ body { display: flex; flex-direction: column; }
   .content { padding: 16px; }
   .stelling { flex-wrap: wrap; }
   .vote-btns { width: 100%; gap: 6px; }
-  .vote-btn { width: 52px; height: 36px; flex-direction: row; gap: 4px; }
+  .vote-btn { width: 56px; min-height: 48px; flex-direction: column; gap: 2px; }
   .principle-split { grid-template-columns: 1fr; }
   .sticky-note { width: 130px; min-height: 85px; }
   .sticky-add { width: 130px; min-height: 85px; }

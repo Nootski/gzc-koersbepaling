@@ -73,23 +73,23 @@ body {
   display: flex; align-items: center; gap: 14px; font-size: 0.88rem; line-height: 1.5;
 }
 .stelling-text { flex: 1; }
-.vote-btns { display: flex; gap: 3px; flex-shrink: 0; }
+.vote-btns { display: flex; gap: 4px; flex-shrink: 0; align-items: stretch; }
 .vote-btn {
-  border-radius: 8px; border: 1px solid var(--border);
-  background: white; cursor: pointer; font-size: 0.85rem; display: flex;
-  flex-direction: column; align-items: center; justify-content: center;
-  transition: all 0.15s; gap: 1px; line-height: 1;
+  border-radius: 10px; border: 2px solid var(--border);
+  background: white; cursor: pointer; font-size: 0.9rem; display: flex;
+  flex-direction: column; align-items: center; justify-content: flex-start;
+  transition: all 0.15s; gap: 2px; line-height: 1; padding: 6px 4px 5px;
   touch-action: manipulation; user-select: none; -webkit-user-select: none;
 }
 .vote-btn:hover { transform: scale(1.05); }
-.vote-btn .vote-count { font-size: 0.55rem; font-weight: 700; color: var(--text-secondary); }
+.vote-btn .vote-count { font-size: 0.6rem; font-weight: 700; color: var(--text-secondary); }
 .vote-btn.selected { border-width: 2px; }
 .vote-btn.selected[data-dir="up"] { border-color: var(--green); background: var(--green-light); }
 .vote-btn.selected[data-dir="side"] { border-color: var(--yellow); background: var(--yellow-light); }
 .vote-btn.selected[data-dir="down"] { border-color: var(--red); background: var(--red-light); }
-.voter-dots { display: flex; gap: 2px; flex-wrap: wrap; justify-content: center; margin-top: 2px; }
+.voter-dots { display: flex; gap: 2px; flex-wrap: wrap; justify-content: center; margin-top: 3px; }
 .voter-dot {
-  width: 14px; height: 14px; border-radius: 50%; font-size: 0.45rem; font-weight: 700;
+  width: 16px; height: 16px; border-radius: 50%; font-size: 0.5rem; font-weight: 700;
   color: white; display: flex; align-items: center; justify-content: center;
 }
 
