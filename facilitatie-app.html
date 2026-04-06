@@ -647,8 +647,8 @@ const sections = [
         <tr><td>13:00–13:15</td><td>Welkom & binnenkomst</td><td>15 min</td></tr>
         <tr><td>13:15–13:45</td><td>Check-in (huiswerk)</td><td>30 min</td></tr>
         <tr><td>13:45–14:15</td><td>Domein 4 — Organisatie</td><td>30 min</td></tr>
-        <tr><td>14:15–14:40</td><td><em>Pauze</em></td><td>25 min</td></tr>
-        <tr><td>14:40–15:10</td><td>Domein 5 — Medewerkers</td><td>30 min</td></tr>
+        <tr><td>14:15–14:45</td><td>Domein 5 — Medewerkers</td><td>30 min</td></tr>
+        <tr><td>14:45–15:10</td><td><em>Pauze</em></td><td>25 min</td></tr>
         <tr><td>15:10–15:40</td><td>Domein 6 — Kansen/bedreigingen</td><td>30 min</td></tr>
         <tr><td>15:40–16:25</td><td>Synthese & actiepunten</td><td>45 min</td></tr>
         <tr><td>16:25–16:40</td><td>Feedbackafspraken</td><td>15 min</td></tr>
@@ -763,11 +763,7 @@ const sections = [
     ${outcomeBox('2–3 verbeterpunten met eigenaar + één organisatieprincipe + één financieel principe')}`
 },
 {
-  id:'pauze', icon:'☕', title:'Pauze', time:'14:15–14:40', minutes:25,
-  render: () => `<div class="pauze-screen"><div class="pauze-icon">☕</div><div class="pauze-title">Pauze</div><div class="pauze-sub">14:15–14:40 · 25 minuten — even naar buiten, bewegen, koffie</div></div>`
-},
-{
-  id:'medewerkers', icon:'👥', title:'Medewerkers', time:'14:40–15:10', minutes:30,
+  id:'medewerkers', icon:'👥', title:'Medewerkers', time:'14:15–14:45', minutes:30,
   render: () => `
     <div class="section-badge">Domein 5</div>
     <div class="section-title">Medewerkers</div>
@@ -831,6 +827,10 @@ const sections = [
       </div>
     </div>
     ${outcomeBox('Één principe over wat wij geven + één principe over wat wij verwachten')}`
+},
+{
+  id:'pauze', icon:'☕', title:'Pauze', time:'14:45–15:10', minutes:25,
+  render: () => `<div class="pauze-screen"><div class="pauze-icon">☕</div><div class="pauze-title">Pauze</div><div class="pauze-sub">14:45–15:10 · 25 minuten — even naar buiten, bewegen, koffie</div></div>`
 },
 {
   id:'kansen', icon:'🔭', title:'Kansen & bedreigingen', time:'15:10–15:40', minutes:30,
