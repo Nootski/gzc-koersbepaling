@@ -6,7 +6,7 @@
 <title>Koersbepaling — Deelnemer</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@300;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="shared.css?v=6">
+<link rel="stylesheet" href="shared.css?v=7">
 <style>
 html, body { height: 100dvh; overflow: hidden; }
 body { display: flex; flex-direction: column; }
@@ -158,7 +158,7 @@ body { display: flex; flex-direction: column; }
 <!-- CONTENT -->
 <div class="m-content" id="mContent"></div>
 
-<script src="shared.js?v=6"></script>
+<script src="shared.js?v=7"></script>
 <script>
 let currentSlideId = 'welkom';
 
@@ -588,7 +588,11 @@ function mDeleteSticky(zone, id) {
 // SSE handlers
 onStateChange = function(type, data) {
   if (type === 'init') {
-    if (myName) renderSlide(state.currentSlide);
+    if (myName && !state.participants[myName]) {
+      showJoinScreen();
+    } else if (myName) {
+      renderSlide(state.currentSlide);
+    }
     return;
   }
   if (type === 'vote' || type === 'unvote') updateVoteDisplay(data.id);
