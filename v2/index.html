@@ -623,12 +623,35 @@ document.addEventListener('keydown', e => {
   if (e.key==='ArrowLeft') { e.preventDefault(); nav(-1); }
 });
 
+let resetPending = false;
 function resetSession() {
-  if (!confirm('Nieuwe sessie starten? De huidige data wordt gearchiveerd.')) return;
+  if (!resetPending) {
+    resetPending = true;
+    const btn = document.querySelector('[onclick="resetSession()"]');
+    if (btn) { btn.textContent = '⚠️ Bevestig reset'; btn.style.background = 'rgba(255,40,40,0.6)'; }
+    setTimeout(() => {
+      resetPending = false;
+      if (btn) { btn.textContent = '🔄 Nieuwe sessie'; btn.style.background = 'rgba(255,80,80,0.25)'; }
+    }, 4000);
+    return;
+  }
+  resetPending = false;
+  const btn = document.querySelector('[onclick="resetSession()"]');
+  if (btn) { btn.textContent = '⏳ Resetten...'; btn.disabled = true; }
   fetch('api/reset', { method:'POST' })
     .then(r => r.json())
-    .then(d => { alert(`Sessie gearchiveerd als ${d.archived}\nNieuwe sessie gestart.`); })
-    .catch(e => alert('Fout: ' + e));
+    .then(d => {
+      if (btn) { btn.textContent = '✅ Nieuw gestart'; btn.style.background = 'rgba(80,200,80,0.4)'; }
+      setTimeout(() => {
+        if (btn) { btn.textContent = '🔄 Nieuwe sessie'; btn.style.background = 'rgba(255,80,80,0.25)'; btn.disabled = false; }
+      }, 2000);
+    })
+    .catch(e => {
+      if (btn) { btn.textContent = '❌ Fout'; btn.style.background = 'rgba(255,40,40,0.5)'; btn.disabled = false; }
+      setTimeout(() => {
+        if (btn) { btn.textContent = '🔄 Nieuwe sessie'; btn.style.background = 'rgba(255,80,80,0.25)'; }
+      }, 3000);
+    });
 }
 
 // Louise is facilitator + participant
