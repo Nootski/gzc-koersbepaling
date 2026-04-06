@@ -156,20 +156,26 @@ function updateVoteDisplay(sid) {
 
 let onParticipantClick = null;
 
+function _handleDotClick(e) {
+  const dot = e.target.closest('.participant-dot');
+  if (dot && dot.dataset.participant && onParticipantClick) {
+    onParticipantClick(dot.dataset.participant);
+  }
+}
+
 function updateParticipantDots() {
   const el = document.getElementById('participantDots');
   if (!el) return;
+  if (!el._delegated) {
+    el.addEventListener('click', _handleDotClick);
+    el._delegated = true;
+  }
+  const clickable = onParticipantClick ? 'cursor:pointer;' : '';
   el.innerHTML = Object.entries(PARTICIPANTS).map(([name, color]) => {
     const p = state.participants[name];
     const online = p && (Date.now()/1000 - p.lastSeen < 30);
-    const clickable = onParticipantClick ? 'cursor:pointer;' : '';
     return `<span class="participant-dot ${online?'online':'offline'}" style="background:${color};${clickable}" title="${name}" data-participant="${name}">${name[0]}</span>`;
   }).join('');
-  if (onParticipantClick) {
-    el.querySelectorAll('.participant-dot').forEach(dot => {
-      dot.onclick = () => onParticipantClick(dot.dataset.participant);
-    });
-  }
 }
 
 function getPersonData(name) {
