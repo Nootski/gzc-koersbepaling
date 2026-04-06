@@ -29,6 +29,12 @@ function connectSSE() {
 
   eventSource.addEventListener('message', e => {
     const u = JSON.parse(e.data);
+    if (u.type === 'reset') {
+      state = { version:0, currentSlide:'welkom', participants:{}, votes:{}, stickies:{}, texts:{} };
+      if (onStateChange) onStateChange('init', state);
+      if (onSlideChange) onSlideChange('welkom');
+      return;
+    }
     applyLocal(u);
     if (onStateChange) onStateChange(u.type, u);
     if (u.type === 'navigate' && onSlideChange) onSlideChange(u.slide);

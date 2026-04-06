@@ -15,7 +15,10 @@ from urllib.parse import urlparse
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 STATE_FILE = os.path.join(BASE_DIR, "v2_state.json")
+SESSIONS_DIR = os.path.join(BASE_DIR, "v2_sessions")
 V2_DIR = os.path.join(BASE_DIR, "v2")
+
+os.makedirs(SESSIONS_DIR, exist_ok=True)
 
 PARTICIPANTS = {
     "Sophie": "#E57373",
@@ -31,18 +34,39 @@ sse_clients = []
 sse_lock = threading.Lock()
 
 
-def load_state():
-    if os.path.exists(STATE_FILE):
-        with open(STATE_FILE) as f:
-            return json.load(f)
+def fresh_state():
     return {
         "version": 0,
         "currentSlide": "welkom",
+        "startedAt": time.strftime("%Y-%m-%dT%H:%M:%S"),
         "participants": {},
         "votes": {},
         "stickies": {},
         "texts": {},
     }
+
+
+def load_state():
+    if os.path.exists(STATE_FILE):
+        with open(STATE_FILE) as f:
+            data = json.load(f)
+            if "startedAt" not in data:
+                data["startedAt"] = time.strftime("%Y-%m-%dT%H:%M:%S")
+            return data
+    return fresh_state()
+
+
+def archive_state():
+    """Save current state to v2_sessions/ with timestamp, return the filename."""
+    ts = time.strftime("%Y%m%d_%H%M%S")
+    started = state.get("startedAt", "unknown")
+    fname = f"sessie_{ts}.json"
+    path = os.path.join(SESSIONS_DIR, fname)
+    archive = dict(state)
+    archive["archivedAt"] = time.strftime("%Y-%m-%dT%H:%M:%S")
+    with open(path, "w") as f:
+        json.dump(archive, f, ensure_ascii=False, indent=2)
+    return fname, started
 
 
 def save_state():
@@ -101,6 +125,26 @@ class Handler(SimpleHTTPRequestHandler):
         elif path == "/api/participants":
             self.send_json(PARTICIPANTS)
 
+        elif path == "/api/sessions":
+            files = sorted(
+                [f for f in os.listdir(SESSIONS_DIR) if f.endswith(".json")],
+                reverse=True,
+            )
+            sessions = []
+            for f in files:
+                fp = os.path.join(SESSIONS_DIR, f)
+                with open(fp) as fh:
+                    d = json.load(fh)
+                sessions.append({
+                    "file": f,
+                    "startedAt": d.get("startedAt", "?"),
+                    "archivedAt": d.get("archivedAt", "?"),
+                    "version": d.get("version", 0),
+                    "votes": len(d.get("votes", {})),
+                    "stickies": sum(len(v) for v in d.get("stickies", {}).values()),
+                })
+            self.send_json(sessions)
+
         elif path == "/api/stream":
             self._handle_sse()
 
@@ -150,7 +194,9 @@ class Handler(SimpleHTTPRequestHandler):
                     sse_clients.remove(q)
 
     def do_POST(self):
-        if self.path == "/api/update":
+        path = urlparse(self.path).path
+
+        if path == "/api/update":
             length = int(self.headers.get("Content-Length", 0))
             body = json.loads(self.rfile.read(length))
             with state_lock:
@@ -159,6 +205,21 @@ class Handler(SimpleHTTPRequestHandler):
                 save_state()
             broadcast(body)
             self.send_json({"ok": True, "version": state["version"]})
+
+        elif path == "/api/reset":
+            with state_lock:
+                fname, started = archive_state()
+                state.clear()
+                state.update(fresh_state())
+                save_state()
+            broadcast({"type": "reset"})
+            self.send_json({
+                "ok": True,
+                "archived": fname,
+                "previousStartedAt": started,
+                "newStartedAt": state["startedAt"],
+            })
+
         else:
             self.send_response(404)
             self.end_headers()

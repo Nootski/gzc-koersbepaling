@@ -142,6 +142,7 @@ body { display: flex; flex-direction: column; }
   </div>
   <div class="participant-dots" id="participantDots"></div>
   <div class="topbar-timer">
+    <button class="timer-btn" onclick="resetSession()" style="background:rgba(255,80,80,0.25);border-color:rgba(255,80,80,0.4);">🔄 Nieuwe sessie</button>
     <button class="timer-btn" onclick="setTimer(15)">15m</button>
     <button class="timer-btn" onclick="setTimer(20)">20m</button>
     <button class="timer-btn" onclick="setTimer(25)">25m</button>
@@ -566,6 +567,14 @@ document.addEventListener('keydown', e => {
   if (e.key==='ArrowRight') { e.preventDefault(); nav(1); }
   if (e.key==='ArrowLeft') { e.preventDefault(); nav(-1); }
 });
+
+function resetSession() {
+  if (!confirm('Nieuwe sessie starten? De huidige data wordt gearchiveerd.')) return;
+  fetch('api/reset', { method:'POST' })
+    .then(r => r.json())
+    .then(d => { alert(`Sessie gearchiveerd als ${d.archived}\nNieuwe sessie gestart.`); })
+    .catch(e => alert('Fout: ' + e));
+}
 
 connectSSE();
 </script>

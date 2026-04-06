@@ -2,5 +2,6 @@
 *.docx
 heidedag_state.json
 v2_state.json
+v2_sessions/
 __pycache__/
 .DS_Store
