@@ -190,12 +190,6 @@ function showJoinScreen() {
   currentSlideId = 'welkom';
 }
 
-// Auto-resume
-const saved = localStorage.getItem('v2-name');
-if (saved && PARTICIPANTS[saved]) {
-  doJoin(saved, PARTICIPANTS[saved]);
-}
-
 // Section definitions (mobile-optimized)
 function mStelling(id, text) {
   return `<div class="m-stelling" id="stelling-${id}">
@@ -619,6 +613,12 @@ onSlideChange = function(slideId) {
 onReset = function() {
   showJoinScreen();
 };
+
+// Auto-resume (must be after slides definition)
+const saved = localStorage.getItem('v2-name');
+if (saved && PARTICIPANTS[saved]) {
+  doJoin(saved, PARTICIPANTS[saved]);
+}
 
 connectSSE();
 </script>
