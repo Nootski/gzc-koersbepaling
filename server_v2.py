@@ -149,19 +149,33 @@ class Handler(SimpleHTTPRequestHandler):
             self._handle_sse()
 
         elif path in ("/", ""):
-            self.path = "/index.html"
-            super().do_GET()
+            self._serve_html("/index.html")
 
         elif path == "/join":
-            self.path = "/join.html"
-            super().do_GET()
+            self._serve_html("/join.html")
 
         elif path == "/view":
-            self.path = "/view.html"
-            super().do_GET()
+            self._serve_html("/view.html")
 
         else:
             super().do_GET()
+
+    def _serve_html(self, html_path):
+        """Serve HTML file with no-cache headers."""
+        self.path = html_path
+        f = self.send_head()
+        if f:
+            try:
+                self.wfile.write(f.read())
+            finally:
+                f.close()
+
+    def end_headers(self):
+        if self.path and self.path.endswith(".html"):
+            self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
+            self.send_header("Pragma", "no-cache")
+            self.send_header("Expires", "0")
+        super().end_headers()
 
     def _handle_sse(self):
         self.send_response(200)
