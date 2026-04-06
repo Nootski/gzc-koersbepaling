@@ -154,7 +154,7 @@ function updateVoteDisplay(sid) {
   }
 }
 
-let onParticipantClick = null;
+var onParticipantClick = null;
 
 function updateParticipantDots() {
   const el = document.getElementById('participantDots');
