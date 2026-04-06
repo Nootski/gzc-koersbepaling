@@ -376,12 +376,32 @@ const slides = {
       </div>
     </div>`,
 
-  synthese: () => `
+  synthese: () => {
+    const P = [
+      { key:'principle-org-org-l', icon:'⚙️', label:'Organisatie', cls:'org' },
+      { key:'principle-org-fin-l', icon:'💰', label:'Financieel', cls:'fin' },
+      { key:'principle-mw-wg',    icon:'👥', label:'Wij geven', cls:'mw-wg' },
+      { key:'principle-mw-on',    icon:'🎯', label:'Wij verwachten', cls:'mw-on' },
+      { key:'principle-kb-int',   icon:'🏠', label:'Intern', cls:'kb-int' },
+      { key:'principle-kb-ext',   icon:'🌍', label:'Extern', cls:'kb-ext' },
+    ];
+    const cards = P.map(p => {
+      const val = (state.texts || {})[p.key] || '';
+      return `<div class="synth-principle-card ${p.cls}">
+        <div class="synth-principle-label">${p.icon} ${p.label}</div>
+        <div class="synth-principle-text">${val || '<span style="opacity:0.4;font-style:italic;">nog niet ingevuld</span>'}</div>
+      </div>`;
+    }).join('');
+    return `
     <div class="section-badge">Kern van de dag</div>
     <div class="section-title">Synthese</div>
     <div class="card">
-      <div class="card-title">📌 Principes</div>
-      ${mPrinciple('synthese-principes', 'Alle principes (6–8 stuks)')}
+      <div class="card-title">📌 Principes overzicht</div>
+      <div class="synth-principles-grid">${cards}</div>
+    </div>
+    <div class="card">
+      <div class="card-title">📝 Definitieve principes</div>
+      ${mPrinciple('synthese-principes', 'Pas hier aan / voeg samen')}
     </div>
     <div class="card">
       <div class="card-title">📋 Taakverdeling</div>
@@ -402,7 +422,8 @@ const slides = {
         <div class="principle-box"><label>Bewaker</label><input type="text" class="principle-input" style="min-height:28px;" placeholder="Naam..." data-sync="eval-bewaker"
           oninput="doUpdateText(this.dataset.sync,this.value)" onblur="doFlushText(this.dataset.sync,this.value)"></div>
       </div>
-    </div>`,
+    </div>`;
+  },
 
   feedback: () => `
     <div class="section-badge">Afronding</div>

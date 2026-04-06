@@ -410,11 +410,30 @@ const sections = [
 },
 {
   id:'synthese', icon:'🎯', title:'Synthese', time:'15:40–16:25', minutes:45,
-  render: () => `
+  render: () => {
+    const P = [
+      { key:'principle-org-org-l', icon:'⚙️', label:'Organisatieprincipe', cls:'org' },
+      { key:'principle-org-fin-l', icon:'💰', label:'Financieel principe', cls:'fin' },
+      { key:'principle-mw-wg',    icon:'👥', label:'Wij geven (medewerkers)', cls:'mw-wg' },
+      { key:'principle-mw-on',    icon:'🎯', label:'Wij verwachten (medewerkers)', cls:'mw-on' },
+      { key:'principle-kb-int',   icon:'🏠', label:'Intern principe', cls:'kb-int' },
+      { key:'principle-kb-ext',   icon:'🌍', label:'Extern principe', cls:'kb-ext' },
+    ];
+    const cards = P.map(p => {
+      const val = (state.texts || {})[p.key] || '';
+      return `<div class="synth-principle-card ${p.cls}">
+        <div class="synth-principle-label">${p.icon} ${p.label}</div>
+        <div class="synth-principle-text">${val || '<span style="opacity:0.4;font-style:italic;">nog niet ingevuld</span>'}</div>
+      </div>`;
+    }).join('');
+    return `
     <div class="section-badge">Kern van de dag</div>
     <div class="section-title">Synthese</div>
-    <div class="card"><div class="card-title">📌 Principes (10 min)</div>
-      ${principleBox('synthese-principes', 'Alle principes (6–8 stuks)')}</div>
+    <div class="card"><div class="card-title">📌 Principes overzicht</div>
+      <div class="synth-principles-grid">${cards}</div>
+    </div>
+    <div class="card"><div class="card-title">📝 Definitieve principes</div>
+      ${principleBox('synthese-principes', 'Pas hier de principes aan / voeg samen tot definitieve versie')}</div>
     <div class="card"><div class="card-title">📋 Taakverdeling</div>${stickyZone('synthese-taken', 'yellow')}</div>
     <div class="card"><div class="card-title">🎯 SMART-actiepunten</div>
       <table class="smart-table">
@@ -429,7 +448,8 @@ const sections = [
           oninput="doUpdateText(this.dataset.sync,this.value)" onblur="doFlushText(this.dataset.sync,this.value)"></div>
       </div>
     </div>
-    ${outcomeBox('6–8 principes + SMART-actiepunten + evaluatiedatum')}`
+    ${outcomeBox('6–8 principes + SMART-actiepunten + evaluatiedatum')}`;
+  }
 },
 {
   id:'feedback', icon:'🔁', title:'Feedback', time:'16:25–16:40', minutes:15,
