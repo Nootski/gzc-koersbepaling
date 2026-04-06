@@ -303,7 +303,7 @@ def get_local_ip():
 if __name__ == "__main__":
     PORT = 8082
     ip = get_local_ip()
-    os.chdir(BASE_DIR)
+    os.chdir(V2_DIR)
     server = ThreadingHTTPServer(("0.0.0.0", PORT), Handler)
 
     print()
