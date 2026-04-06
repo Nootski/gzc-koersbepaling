@@ -6,7 +6,7 @@
 <title>Koersbepaling — Deelnemer</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@300;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="shared.css?v=5">
+<link rel="stylesheet" href="shared.css?v=6">
 <style>
 html, body { height: 100dvh; overflow: hidden; }
 body { display: flex; flex-direction: column; }
@@ -158,7 +158,7 @@ body { display: flex; flex-direction: column; }
 <!-- CONTENT -->
 <div class="m-content" id="mContent"></div>
 
-<script src="shared.js?v=5"></script>
+<script src="shared.js?v=6"></script>
 <script>
 let currentSlideId = 'welkom';
 
@@ -179,6 +179,15 @@ function doJoin(name, color) {
   document.getElementById('myDot').style.background = color;
   document.getElementById('myNameLabel').textContent = name;
   renderSlide(currentSlideId);
+}
+
+function showJoinScreen() {
+  myName = null;
+  localStorage.removeItem('v2-name');
+  document.getElementById('joinScreen').classList.remove('hidden');
+  document.getElementById('myNameBadge').style.display = 'none';
+  document.getElementById('mContent').innerHTML = '';
+  currentSlideId = 'welkom';
 }
 
 // Auto-resume
@@ -578,7 +587,10 @@ function mDeleteSticky(zone, id) {
 
 // SSE handlers
 onStateChange = function(type, data) {
-  if (type === 'init') { renderSlide(state.currentSlide); return; }
+  if (type === 'init') {
+    if (myName) renderSlide(state.currentSlide);
+    return;
+  }
   if (type === 'vote' || type === 'unvote') updateVoteDisplay(data.id);
   if (type === 'sticky_add') addStickyToDOM(data.zone, data.id, data);
   if (type === 'sticky_update') {
@@ -598,6 +610,10 @@ onStateChange = function(type, data) {
 
 onSlideChange = function(slideId) {
   if (slideId !== currentSlideId) renderSlide(slideId);
+};
+
+onReset = function() {
+  showJoinScreen();
 };
 
 connectSSE();
