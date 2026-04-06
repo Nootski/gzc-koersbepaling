@@ -156,25 +156,14 @@ function updateVoteDisplay(sid) {
 
 let onParticipantClick = null;
 
-function _handleDotClick(e) {
-  const dot = e.target.closest('.participant-dot');
-  if (dot && dot.dataset.participant && onParticipantClick) {
-    onParticipantClick(dot.dataset.participant);
-  }
-}
-
 function updateParticipantDots() {
   const el = document.getElementById('participantDots');
   if (!el) return;
-  if (!el._delegated) {
-    el.addEventListener('click', _handleDotClick);
-    el._delegated = true;
-  }
-  const clickable = onParticipantClick ? 'cursor:pointer;' : '';
   el.innerHTML = Object.entries(PARTICIPANTS).map(([name, color]) => {
     const p = state.participants[name];
     const online = p && (Date.now()/1000 - p.lastSeen < 30);
-    return `<span class="participant-dot ${online?'online':'offline'}" style="background:${color};${clickable}" title="${name}" data-participant="${name}">${name[0]}</span>`;
+    const click = onParticipantClick ? `onclick="onParticipantClick('${name}')" style="background:${color};cursor:pointer;"` : `style="background:${color};"`;
+    return `<button type="button" class="participant-dot ${online?'online':'offline'}" ${click} title="${name}" data-participant="${name}">${name[0]}</button>`;
   }).join('');
 }
 
