@@ -16,6 +16,7 @@ let eventSource = null;
 
 let onStateChange = null;
 let onSlideChange = null;
+var onReset = null;
 
 function connectSSE() {
   if (eventSource) eventSource.close();
@@ -31,7 +32,7 @@ function connectSSE() {
     const u = JSON.parse(e.data);
     if (u.type === 'reset') {
       state = { version:0, currentSlide:'welkom', participants:{}, votes:{}, stickies:{}, texts:{} };
-      if (myName) push({ type:'join', name: myName });
+      if (onReset) { onReset(); } else if (myName) { push({ type:'join', name: myName }); }
       if (onStateChange) onStateChange('init', state);
       if (onSlideChange) onSlideChange('welkom');
       return;
