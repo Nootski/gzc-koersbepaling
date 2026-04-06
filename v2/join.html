@@ -448,12 +448,61 @@ const slides = {
       <div class="card-title">🗣 Jouw antwoord</div>
       ${mStickyZone('checkout', 'yellow')}
     </div>`,
+
+  identiteit: () => `
+    <div class="section-badge" style="background:var(--yellow-light);color:var(--yellow);">Reserve-domein 1</div>
+    <div class="section-title">Identiteit</div>
+    <div class="section-subtitle">Wie zijn wij, wat maakt ons onderscheidend?</div>
+    <div class="card">
+      <div class="card-title">💬 Post-its</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div><strong style="font-size:0.7rem;color:var(--text-secondary);">"Wij zijn een praktijk die..."</strong>${mStickyZone('id-praktijk', 'green')}</div>
+        <div><strong style="font-size:0.7rem;color:var(--text-secondary);">"Onze rol in Utrecht is..."</strong>${mStickyZone('id-rol', 'blue')}</div>
+      </div>
+    </div>
+    <div class="card">${mPrinciple('id-principle', '3–5 kernwaarden + missiezin')}</div>`,
+
+  patienten: () => `
+    <div class="section-badge" style="background:var(--yellow-light);color:var(--yellow);">Reserve-domein 2</div>
+    <div class="section-title">Patiënten</div>
+    <div class="section-subtitle">Hoe gaan we om met onze patiënten?</div>
+    <div class="card">
+      ${mStelling('pat-s1', 'Wij zijn primair empowerend — we sturen op eigen regie.')}
+      ${mStelling('pat-s2', 'Onze praktijk is voldoende toegankelijk voor kwetsbare en laaggeletterde patiënten.')}
+      ${mStelling('pat-s3', 'We zeggen consequent nee als zorg niet bij ons hoort.')}
+      ${mStelling('pat-s4', 'Patiënten weten wat ze van ons kunnen verwachten qua bereikbaarheid.')}
+    </div>
+    <div class="card">${mPrinciple('pat-principle', 'Patiëntprincipe(s)')}</div>`,
+
+  zorginhoud: () => `
+    <div class="section-badge" style="background:var(--yellow-light);color:var(--yellow);">Reserve-domein 3</div>
+    <div class="section-title">Zorginhoud</div>
+    <div class="section-subtitle">Wat doen we wel, wat niet?</div>
+    <div class="card">
+      ${mStelling('z-l1', 'Wij zeggen te vaak ja tegen zorg die niet bij ons hoort.')}
+      ${mStelling('z-l2', 'Substitutie vanuit het ziekenhuis accepteren we te makkelijk.')}
+      ${mStelling('z-l3', 'We moeten ruimte maken voor zorg die de POH/assistent leuk vindt.')}
+      ${mStelling('z-l4', 'We hebben geen helder criterium om te bepalen wat we oppakken.')}
+      ${mStelling('z-l5', 'Preventie klinkt mooi, maar we doen er te weinig mee.')}
+      ${mStelling('z-l6', 'We zijn onderling niet eenduidig in wat we wel en niet doen.')}
+    </div>
+    <div class="card">
+      <div class="card-title">📋 Zorgportfolio</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div><strong style="font-size:0.7rem;color:var(--green);">✅ Kernzorg</strong>${mStickyZone('z2-kern', 'green')}</div>
+        <div><strong style="font-size:0.7rem;color:var(--yellow);">⚠️ Ja, mits</strong>${mStickyZone('z2-mits', 'yellow')}</div>
+        <div><strong style="font-size:0.7rem;color:var(--accent);">❤️ Leuk</strong>${mStickyZone('z2-leuk', 'orange')}</div>
+        <div><strong style="font-size:0.7rem;color:var(--red);">🚫 Niet</strong>${mStickyZone('z2-niet', 'pink')}</div>
+      </div>
+    </div>
+    <div class="card">${mPrinciple('zorg-principle', 'Zorginhoud-principes')}</div>`,
 };
 
 const slideNames = {
   welkom: '🏠 Welkom', checkin: '💬 Check-in', organisatie: '⚙️ Organisatie',
   medewerkers: '👥 Medewerkers', pauze: '☕ Pauze', kansen: '🔭 Kansen',
-  synthese: '🎯 Synthese', feedback: '🔁 Feedback', afsluiting: '✨ Afsluiting'
+  synthese: '🎯 Synthese', feedback: '🔁 Feedback', afsluiting: '✨ Afsluiting',
+  identiteit: '🧭 Identiteit', patienten: '🤝 Patiënten', zorginhoud: '🩺 Zorginhoud'
 };
 
 function renderSlide(id) {

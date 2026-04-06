@@ -476,6 +476,81 @@ const sections = [
     <div class="section-subtitle">Wat neem jij mee?</div>
     <div class="card"><div class="card-title">🗣 Plak je antwoord</div>${stickyZone('checkout', 'yellow')}</div>
     <div class="reminder"><span class="reminder-icon">📝</span><div><strong>Direct vastleggen.</strong> Afspraken die niet opgeschreven worden, bestaan niet.</div></div>`
+},
+{
+  id:'identiteit', icon:'🧭', title:'Identiteit', time:'optioneel', minutes:15,
+  render: () => `
+    <div class="section-badge" style="background:var(--yellow-light);color:var(--yellow);">Reserve-domein 1</div>
+    <div class="section-title">Identiteit</div>
+    <div class="section-subtitle">Wie zijn wij, wat maakt ons onderscheidend, hoe verhouden we ons tot de stad?</div>
+    <div class="reminder"><span class="reminder-icon">💡</span><div>Dit domein staat achteraan als reserve. Spring hier alleen naartoe als de groep besluit het te behandelen.</div></div>
+    <div class="reminder"><span class="reminder-icon">📄</span><div><strong>Huidige missie:</strong> laagdrempelige diagnostische, therapeutische en preventieve zorg — op maat, op afstand waar het kan, persoonlijk als het nodig is.<br><strong>Huidige visie:</strong> integrale, persoonsgerichte en continue zorg. Ruimte voor innovatie. Werkplezier als voorwaarde.</div></div>
+    <div class="card">
+      <div class="card-title">💬 Post-its</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <div><strong style="font-size:0.75rem;color:var(--text-secondary);">"Wij zijn een praktijk die..."</strong>${stickyZone('id-praktijk', 'green')}</div>
+        <div><strong style="font-size:0.75rem;color:var(--text-secondary);">"Onze rol in Utrecht is..."</strong>${stickyZone('id-rol', 'blue')}</div>
+      </div>
+    </div>
+    <div class="card">${principleBox('id-principle', '3–5 kernwaarden + missiezin')}</div>
+    ${outcomeBox('3–5 kernwaarden + een missiezin als kompas')}`
+},
+{
+  id:'patienten', icon:'🤝', title:'Patiënten', time:'optioneel', minutes:15,
+  render: () => `
+    <div class="section-badge" style="background:var(--yellow-light);color:var(--yellow);">Reserve-domein 2</div>
+    <div class="section-title">Patiënten</div>
+    <div class="section-subtitle">Hoe kijken we naar en gaan we om met onze patiënten?</div>
+    <div class="reminder"><span class="reminder-icon">💡</span><div>Dit domein staat achteraan als reserve. Spring hier alleen naartoe als de groep besluit het te behandelen.</div></div>
+    <div class="card">
+      <div class="card-title">💬 Reflectievragen</div>
+      <ul style="list-style:disc;padding-left:18px;font-size:0.85rem;line-height:1.8;">
+        <li>Bejegening: empowerend, ontzorgend, of situationeel?</li>
+        <li>Toegankelijk voor lagere gezondheidsvaardigheden?</li>
+        <li>Hoe om met ver-weg-patiënten en wisselaars?</li>
+        <li>Verwachtingen qua bereikbaarheid?</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-title">📊 Stellingen</div>
+      <div class="vote-hint">Iedereen stemt op eigen telefoon.</div>
+      ${stelling('pat-s1', 'Wij zijn primair empowerend — we sturen op eigen regie.')}
+      ${stelling('pat-s2', 'Onze praktijk is voldoende toegankelijk voor kwetsbare en laaggeletterde patiënten.')}
+      ${stelling('pat-s3', 'We zeggen consequent nee als zorg niet bij ons hoort — eenduidig.')}
+      ${stelling('pat-s4', 'Patiënten weten wat ze van ons kunnen verwachten qua bereikbaarheid.')}
+    </div>
+    <div class="card">${principleBox('pat-principle', 'Patiëntprincipe(s)')}</div>
+    ${outcomeBox('1–2 principes over hoe wij omgaan met patiënten')}`
+},
+{
+  id:'zorginhoud', icon:'🩺', title:'Zorginhoud', time:'optioneel', minutes:15,
+  render: () => `
+    <div class="section-badge" style="background:var(--yellow-light);color:var(--yellow);">Reserve-domein 3</div>
+    <div class="section-title">Zorginhoud — wat doen we wel, wat niet?</div>
+    <div class="section-subtitle">Er komt steeds meer zorg onze kant op. Hoe prioriteren we?</div>
+    <div class="reminder"><span class="reminder-icon">💡</span><div>Dit domein staat achteraan als reserve. Spring hier alleen naartoe als de groep besluit het te behandelen.</div></div>
+    <div class="card">
+      <div class="card-title">📊 Stellingen</div>
+      <div class="vote-hint">Iedereen stemt op eigen telefoon.</div>
+      ${stelling('z-l1', 'Wij zeggen te vaak ja tegen zorg die eigenlijk niet bij ons hoort.')}
+      ${stelling('z-l2', 'Substitutie vanuit het ziekenhuis accepteren we te makkelijk.')}
+      ${stelling('z-l3', 'We moeten ruimte maken voor zorg die de POH/assistent leuk vindt en goed kan.')}
+      ${stelling('z-l4', 'We hebben geen helder criterium om te bepalen of we iets wel of niet oppakken.')}
+      ${stelling('z-l5', 'Preventie klinkt mooi, maar we doen er in de praktijk te weinig mee.')}
+      ${stelling('z-l6', 'We zijn onderling niet eenduidig in wat we wel en niet doen.')}
+    </div>
+    <div class="card">
+      <div class="card-title">📋 Zorgportfolio</div>
+      <p style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:12px;">Plak per zorgvorm een sticky in de juiste kolom.</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div><strong style="font-size:0.72rem;color:var(--green);text-transform:uppercase;">✅ Kernzorg</strong>${stickyZone('z2-kern', 'green')}</div>
+        <div><strong style="font-size:0.72rem;color:var(--yellow);text-transform:uppercase;">⚠️ Ja, mits</strong>${stickyZone('z2-mits', 'yellow')}</div>
+        <div><strong style="font-size:0.72rem;color:var(--accent);text-transform:uppercase;">❤️ Omdat we het leuk vinden</strong>${stickyZone('z2-leuk', 'orange')}</div>
+        <div><strong style="font-size:0.72rem;color:var(--red);text-transform:uppercase;">🚫 Bewust niet</strong>${stickyZone('z2-niet', 'pink')}</div>
+      </div>
+    </div>
+    <div class="card">${principleBox('zorg-principle', 'Zorginhoud-principes: wat doen we wel, wat niet, en waarom')}</div>
+    ${outcomeBox('Zorgportfolio + toetsingscriteria')}`
 }
 ];
 
