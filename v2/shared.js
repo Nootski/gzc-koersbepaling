@@ -31,6 +31,7 @@ function connectSSE() {
     const u = JSON.parse(e.data);
     if (u.type === 'reset') {
       state = { version:0, currentSlide:'welkom', participants:{}, votes:{}, stickies:{}, texts:{} };
+      if (myName) push({ type:'join', name: myName });
       if (onStateChange) onStateChange('init', state);
       if (onSlideChange) onSlideChange('welkom');
       return;
