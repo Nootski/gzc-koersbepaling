@@ -153,12 +153,34 @@ function updateVoteDisplay(sid) {
   }
 }
 
+let onParticipantClick = null;
+
 function updateParticipantDots() {
   const el = document.getElementById('participantDots');
   if (!el) return;
   el.innerHTML = Object.entries(PARTICIPANTS).map(([name, color]) => {
     const p = state.participants[name];
     const online = p && (Date.now()/1000 - p.lastSeen < 30);
-    return `<span class="participant-dot ${online?'online':'offline'}" style="background:${color}" title="${name}">${name[0]}</span>`;
+    const clickable = onParticipantClick ? 'cursor:pointer;' : '';
+    return `<span class="participant-dot ${online?'online':'offline'}" style="background:${color};${clickable}" title="${name}" data-participant="${name}">${name[0]}</span>`;
   }).join('');
+  if (onParticipantClick) {
+    el.querySelectorAll('.participant-dot').forEach(dot => {
+      dot.onclick = () => onParticipantClick(dot.dataset.participant);
+    });
+  }
+}
+
+function getPersonData(name) {
+  const votes = [];
+  for (const [sid, voters] of Object.entries(state.votes || {})) {
+    if (voters[name]) votes.push({ id: sid, direction: voters[name] });
+  }
+  const stickies = [];
+  for (const [zone, items] of Object.entries(state.stickies || {})) {
+    for (const [sId, data] of Object.entries(items)) {
+      if (data.author === name) stickies.push({ zone, id: sId, text: data.text, color: data.color });
+    }
+  }
+  return { votes, stickies };
 }

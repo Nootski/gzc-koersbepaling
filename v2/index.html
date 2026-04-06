@@ -102,6 +102,49 @@ body { display: flex; flex-direction: column; }
 .spoor-content { display: none; }
 .spoor-content.active { display: block; }
 
+/* PERSON DETAIL PANEL */
+.person-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 9000;
+  display: flex; justify-content: flex-end;
+}
+.person-overlay.hidden { display: none; }
+.person-panel {
+  width: 420px; max-width: 90vw; background: var(--bg); height: 100%;
+  box-shadow: -8px 0 32px rgba(0,0,0,0.15); display: flex; flex-direction: column;
+  animation: slideIn 0.25s ease-out;
+}
+@keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+.person-panel-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 16px 20px; background: var(--primary); color: white;
+}
+.person-panel-dot { width: 28px; height: 28px; border-radius: 50%; border: 2px solid white; flex-shrink: 0; }
+.person-panel-name { font-family: 'Fraunces', serif; font-size: 1.2rem; font-weight: 600; flex: 1; }
+.person-panel-close {
+  background: rgba(255,255,255,0.2); border: none; color: white; width: 32px; height: 32px;
+  border-radius: 50%; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+.person-panel-close:hover { background: rgba(255,255,255,0.3); }
+.person-panel-body { flex: 1; overflow-y: auto; padding: 16px 20px; }
+.pp-section { margin-bottom: 20px; }
+.pp-section-title {
+  font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--primary); margin-bottom: 8px; display: flex; align-items: center; gap: 6px;
+}
+.pp-vote-item {
+  background: white; border-radius: 8px; padding: 10px 12px; margin-bottom: 6px;
+  font-size: 0.82rem; line-height: 1.4; display: flex; align-items: center; gap: 10px;
+  border: 1px solid var(--border);
+}
+.pp-vote-icon { font-size: 1.1rem; flex-shrink: 0; }
+.pp-vote-text { flex: 1; color: var(--text-secondary); }
+.pp-sticky-item {
+  padding: 10px 12px; border-radius: 6px; margin-bottom: 6px;
+  font-size: 0.82rem; line-height: 1.4; box-shadow: 1px 1px 3px rgba(0,0,0,0.08);
+}
+.pp-sticky-zone { font-size: 0.65rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 2px; }
+.pp-empty { color: var(--text-secondary); font-size: 0.82rem; font-style: italic; padding: 8px 0; }
+
 /* RESPONSIVE */
 @media (max-width: 1024px) {
   .sidebar { width: 180px; }
@@ -127,6 +170,18 @@ body { display: flex; flex-direction: column; }
 </style>
 </head>
 <body>
+
+<!-- PERSON DETAIL PANEL -->
+<div class="person-overlay hidden" id="personOverlay" onclick="if(event.target===this)closePersonPanel()">
+  <div class="person-panel">
+    <div class="person-panel-header" id="personPanelHeader">
+      <span class="person-panel-dot" id="personPanelDot"></span>
+      <span class="person-panel-name" id="personPanelName"></span>
+      <button class="person-panel-close" onclick="closePersonPanel()">✕</button>
+    </div>
+    <div class="person-panel-body" id="personPanelBody"></div>
+  </div>
+</div>
 
 <div class="beep-overlay" id="beepOverlay" onclick="dismissBeep()">
   <div class="beep-text">Tijd is om!</div>
@@ -182,9 +237,9 @@ function stelling(id, text) {
   return `<div class="stelling" id="stelling-${id}">
     <div class="stelling-text">${text}</div>
     <div class="vote-btns">
-      <button class="vote-btn" data-dir="up">👍<span class="vote-count" id="vc-${id}-up">0</span><div class="voter-dots" id="va-${id}-up"></div></button>
-      <button class="vote-btn" data-dir="side">🤷<span class="vote-count" id="vc-${id}-side">0</span><div class="voter-dots" id="va-${id}-side"></div></button>
-      <button class="vote-btn" data-dir="down">👎<span class="vote-count" id="vc-${id}-down">0</span><div class="voter-dots" id="va-${id}-down"></div></button>
+      <button class="vote-btn" data-dir="up" onclick="castVote('${id}','up')">👍<span class="vote-count" id="vc-${id}-up">0</span><div class="voter-dots" id="va-${id}-up"></div></button>
+      <button class="vote-btn" data-dir="side" onclick="castVote('${id}','side')">🤷<span class="vote-count" id="vc-${id}-side">0</span><div class="voter-dots" id="va-${id}-side"></div></button>
+      <button class="vote-btn" data-dir="down" onclick="castVote('${id}','down')">👎<span class="vote-count" id="vc-${id}-down">0</span><div class="voter-dots" id="va-${id}-down"></div></button>
     </div>
   </div>`;
 }
@@ -575,6 +630,73 @@ function resetSession() {
     .then(d => { alert(`Sessie gearchiveerd als ${d.archived}\nNieuwe sessie gestart.`); })
     .catch(e => alert('Fout: ' + e));
 }
+
+// Louise is facilitator + participant
+joinSession('Louise');
+
+// ===== PERSON DETAIL PANEL =====
+const STELLING_LABELS = {
+  'o-l1': 'Wij zijn een reactieve praktijk',
+  'o-l2': 'Onze pragmatische aanpak werkt prima',
+  'o-l3': 'We bezuinigen op plekken waar we zouden moeten investeren',
+  'o-l4': 'Met slimmere IT zouden we meer tijd overhouden',
+  'o-l5': 'Er zit meer werkplezier in deze praktijk dan we eruit halen',
+  'o-l6': 'Als we nu de juiste keuzes maken, betere praktijk over 2 jaar',
+  'o-l7': 'We zijn duurzaam, maar het mag geen geld kosten',
+  'o-l8': 'Onze dagstructuur klopt',
+};
+const ZONE_LABELS = {
+  'checkin-themes': 'Check-in thema\'s',
+  'org-spanningen-l': 'Organisatie spanningen',
+  'mw-lang': 'Medewerkers',
+  'k2-int-kansen': 'Intern — kansen',
+  'k2-int-bedreig': 'Intern — bedreigingen',
+  'k2-ext-kansen': 'Extern — kansen',
+  'k2-ext-bedreig': 'Extern — bedreigingen',
+  'synthese-taken': 'Synthese taken',
+  'feedback-afspraken': 'Feedback afspraken',
+  'checkout': 'Check-out',
+};
+const VOTE_ICONS = { up: '👍', side: '🤷', down: '👎' };
+
+function openPersonPanel(name) {
+  const { votes, stickies } = getPersonData(name);
+  document.getElementById('personPanelDot').style.background = PARTICIPANTS[name];
+  document.getElementById('personPanelName').textContent = name;
+  const body = document.getElementById('personPanelBody');
+  let html = '';
+
+  html += `<div class="pp-section"><div class="pp-section-title">🗳 Stemmen (${votes.length})</div>`;
+  if (votes.length) {
+    votes.forEach(v => {
+      const label = STELLING_LABELS[v.id] || v.id;
+      html += `<div class="pp-vote-item"><span class="pp-vote-icon">${VOTE_ICONS[v.direction]||'?'}</span><span class="pp-vote-text">${label}</span></div>`;
+    });
+  } else {
+    html += `<div class="pp-empty">Nog geen stemmen</div>`;
+  }
+  html += `</div>`;
+
+  html += `<div class="pp-section"><div class="pp-section-title">📝 Stickies (${stickies.length})</div>`;
+  if (stickies.length) {
+    stickies.forEach(s => {
+      const zoneLabel = ZONE_LABELS[s.zone] || s.zone;
+      html += `<div class="pp-sticky-item" style="background:${s.color}"><div class="pp-sticky-zone">${zoneLabel}</div>${s.text || '<em>leeg</em>'}</div>`;
+    });
+  } else {
+    html += `<div class="pp-empty">Nog geen stickies</div>`;
+  }
+  html += `</div>`;
+
+  body.innerHTML = html;
+  document.getElementById('personOverlay').classList.remove('hidden');
+}
+
+function closePersonPanel() {
+  document.getElementById('personOverlay').classList.add('hidden');
+}
+
+onParticipantClick = openPersonPanel;
 
 connectSSE();
 </script>
