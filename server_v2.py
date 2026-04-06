@@ -156,6 +156,10 @@ class Handler(SimpleHTTPRequestHandler):
             self.path = "/join.html"
             super().do_GET()
 
+        elif path == "/view":
+            self.path = "/view.html"
+            super().do_GET()
+
         else:
             super().do_GET()
 

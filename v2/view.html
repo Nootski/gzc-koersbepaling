@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Koersbepaling v2 — Viewer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared.css?v=5">
+<style>
+html, body { height: 100vh; overflow: hidden; }
+body { display: flex; flex-direction: column; }
+
+.progress-bar { height: 3px; background: rgba(255,255,255,0.15); flex-shrink: 0; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, #81C784, #FFB74D, #FF7043); transition: width 0.3s; }
+
+.main { display: flex; flex: 1; overflow: hidden; }
+.sidebar {
+  width: 230px; background: var(--bg-card); border-right: 1px solid var(--border);
+  overflow-y: auto; flex-shrink: 0; padding: 12px 0;
+}
+.sidebar-item {
+  display: flex; align-items: center; gap: 8px; padding: 9px 16px; cursor: pointer;
+  transition: all 0.2s; font-size: 0.78rem; color: var(--text-secondary);
+  border-left: 3px solid transparent;
+}
+.sidebar-item:hover { background: var(--primary-light); color: var(--primary); }
+.sidebar-item.active { background: var(--primary-light); color: var(--primary); font-weight: 600; border-left-color: var(--primary); }
+.sidebar-icon {
+  width: 24px; height: 24px; border-radius: 6px; display: flex; align-items: center;
+  justify-content: center; font-size: 0.8rem; flex-shrink: 0; background: var(--bg);
+}
+.sidebar-item.active .sidebar-icon { background: var(--primary); color: white; }
+.sidebar-time { margin-left: auto; font-size: 0.65rem; opacity: 0.5; white-space: nowrap; }
+
+.content { flex: 1; overflow-y: auto; padding: 32px 48px; scroll-behavior: smooth; }
+.content::-webkit-scrollbar { width: 5px; }
+.content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+.vote-btn { width: 56px; min-height: 56px; height: auto; padding: 6px 2px 4px; pointer-events: none; }
+.vote-btn .voter-dots { min-height: 16px; }
+
+.viewer-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2);
+  padding: 4px 12px; border-radius: 20px; font-size: 0.72rem; font-weight: 500;
+  color: rgba(255,255,255,0.7); margin-left: 14px;
+}
+.viewer-badge::before { content: '👁'; font-size: 0.85rem; }
+
+.nav-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 24px; background: var(--bg-card); border-top: 1px solid var(--border); flex-shrink: 0;
+}
+.nav-btn {
+  display: flex; align-items: center; gap: 6px; padding: 8px 20px; border-radius: 8px;
+  border: 2px solid var(--primary); background: white; color: var(--primary);
+  font-family: 'Inter', sans-serif; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.2s;
+}
+.nav-btn:hover { background: var(--primary-light); }
+.nav-btn.primary { background: var(--primary); color: white; }
+.nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+.nav-dots { display: flex; gap: 5px; }
+.nav-dot {
+  width: 7px; height: 7px; border-radius: 50%; background: var(--border); cursor: pointer; transition: all 0.2s;
+}
+.nav-dot.active { background: var(--primary); transform: scale(1.3); }
+
+/* Read-only overrides */
+.sticky-add { display: none !important; }
+.sticky-delete { display: none !important; }
+.sticky-note textarea { pointer-events: none; }
+.principle-input { pointer-events: none; }
+input[data-sync] { pointer-events: none; }
+textarea[data-sync] { pointer-events: none; }
+
+@media (max-width: 1024px) {
+  .sidebar { width: 180px; }
+  .sidebar-time { display: none; }
+  .content { padding: 24px 28px; }
+}
+@media (max-width: 900px) {
+  .sidebar { display: none; }
+  .content { padding: 20px; }
+  .section-title { font-size: 1.6rem; }
+}
+@media (max-width: 768px) {
+  .content [style*="grid-template-columns"] { grid-template-columns: 1fr !important; }
+  .topbar { padding: 8px 14px; flex-wrap: wrap; gap: 6px; }
+  .content { padding: 16px; }
+  .stelling { flex-wrap: wrap; }
+  .vote-btns { width: 100%; gap: 6px; }
+  .vote-btn { width: 56px; min-height: 48px; flex-direction: column; gap: 2px; }
+  .principle-split { grid-template-columns: 1fr; }
+  .sticky-note { width: 130px; min-height: 85px; }
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <div>
+      <div class="topbar-title">Koersbepaling v2</div>
+      <div class="topbar-section" id="topbarSection">Welkom</div>
+    </div>
+    <span class="viewer-badge">Alleen meekijken</span>
+  </div>
+  <div class="participant-dots" id="participantDots"></div>
+</div>
+<div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+
+<div class="main">
+  <div class="sidebar" id="sidebar"></div>
+  <div class="content" id="content"></div>
+</div>
+
+<div class="nav-bar">
+  <button class="nav-btn" id="prevBtn" onclick="nav(-1)">← Vorige</button>
+  <div class="nav-dots" id="navDots"></div>
+  <button class="nav-btn primary" id="nextBtn" onclick="nav(1)">Volgende →</button>
+</div>
+
+<script src="shared.js?v=5"></script>
+<script>
+let currentSection = 0;
+
+function stickyZone(zoneId, defaultColor) {
+  const c = STICKY_COLORS[defaultColor] || STICKY_COLORS.yellow;
+  return `<div class="sticky-zone" id="zone-${zoneId}" data-zone="${zoneId}" data-color="${c}"></div>`;
+}
+
+function stelling(id, text) {
+  return `<div class="stelling" id="stelling-${id}">
+    <div class="stelling-text">${text}</div>
+    <div class="vote-btns">
+      <button class="vote-btn" data-dir="up">👍<span class="vote-count" id="vc-${id}-up">0</span><div class="voter-dots" id="va-${id}-up"></div></button>
+      <button class="vote-btn" data-dir="side">🤷<span class="vote-count" id="vc-${id}-side">0</span><div class="voter-dots" id="va-${id}-side"></div></button>
+      <button class="vote-btn" data-dir="down">👎<span class="vote-count" id="vc-${id}-down">0</span><div class="voter-dots" id="va-${id}-down"></div></button>
+    </div>
+  </div>`;
+}
+
+function principleBox(id, placeholder) {
+  return `<div class="principle-box"><label>Streefuitkomst</label>
+    <textarea class="principle-input" data-sync="principle-${id}" placeholder="${placeholder}" readonly></textarea></div>`;
+}
+
+function outcomeBox(text) {
+  return `<div class="outcome-box"><span class="outcome-icon">🎯</span><div class="outcome-text">${text}</div></div>`;
+}
+
+function spoorToggle(id, kort, uitgebreid) {
+  return `<div class="card"><div class="spoor-toggle">
+    <button class="spoor-btn active" onclick="switchSpoor('${id}','kort',this)">⚡ Kort</button>
+    <button class="spoor-btn" onclick="switchSpoor('${id}','uitgebreid',this)">◎ Uitgebreid</button>
+  </div>
+  <div class="spoor-content active" id="spoor-${id}-kort">${kort}</div>
+  <div class="spoor-content" id="spoor-${id}-uitgebreid">${uitgebreid}</div></div>`;
+}
+
+function syncInput(id, placeholder, tag) {
+  if (tag === 'textarea') return `<textarea data-sync="${id}" placeholder="${placeholder}" readonly></textarea>`;
+  return `<input type="text" data-sync="${id}" placeholder="${placeholder}" readonly>`;
+}
+
+// ===== SECTIONS (identical content, no interactive handlers) =====
+const sections = [
+{
+  id:'welkom', icon:'🏠', title:'Welkom', time:'13:00–13:15', minutes:15,
+  render: () => `
+    <div class="section-badge">Opening</div>
+    <div class="section-title">Welkom bij de Koersbepaling</div>
+    <div class="section-subtitle">6 maten · 13:00–17:00</div>
+    <div class="card"><div class="card-title">⏱ Dagprogramma</div>
+      <table class="smart-table">
+        <tr><th>Tijd</th><th>Onderdeel</th><th>Duur</th></tr>
+        <tr><td>13:00–13:15</td><td>Welkom</td><td>15 min</td></tr>
+        <tr><td>13:15–13:45</td><td>Check-in</td><td>30 min</td></tr>
+        <tr><td>13:45–14:15</td><td>Organisatie</td><td>30 min</td></tr>
+        <tr><td>14:15–14:45</td><td>Medewerkers</td><td>30 min</td></tr>
+        <tr><td>14:45–15:10</td><td><em>Pauze</em></td><td>25 min</td></tr>
+        <tr><td>15:10–15:40</td><td>Kansen & bedreigingen</td><td>30 min</td></tr>
+        <tr><td>15:40–16:25</td><td>Synthese</td><td>45 min</td></tr>
+        <tr><td>16:25–16:55</td><td>Feedback & Afsluiting</td><td>30 min</td></tr>
+      </table>
+    </div>`
+},
+{
+  id:'checkin', icon:'💬', title:'Check-in', time:'13:15–13:45', minutes:30,
+  render: () => `
+    <div class="section-badge">Opening</div>
+    <div class="section-title">Persoonlijke Check-in</div>
+    <div class="section-subtitle">Max. 3 minuten per persoon. De rest luistert.</div>
+    <div class="card"><div class="card-title">📝 De vijf vragen</div>
+      <div class="checkin-grid">
+        <div class="checkin-q"><div class="q-num">1</div><div class="q-text">Hoe zit jij er nu in — wat geeft je energie?</div></div>
+        <div class="checkin-q"><div class="q-num">2</div><div class="q-text">Wat is voor jou een energie-drain?</div></div>
+        <div class="checkin-q"><div class="q-num">3</div><div class="q-text">Wat heb jij van de maatschap nodig?</div></div>
+        <div class="checkin-q"><div class="q-num">4</div><div class="q-text">Hoe ziet jouw ideale werkdag eruit?</div></div>
+        <div class="checkin-q"><div class="q-num">5</div><div class="q-text">Wat zou je de maatschap willen vragen dat je nu nog niet vraagt?</div></div>
+      </div>
+    </div>
+    <div class="card"><div class="card-title">🔖 Terugkerende thema's</div>${stickyZone('checkin-themes', 'yellow')}</div>
+    ${outcomeBox('Gedeeld beeld van waar iedereen staat')}`
+},
+{
+  id:'organisatie', icon:'⚙️', title:'Organisatie', time:'13:45–14:15', minutes:30,
+  render: () => `
+    <div class="section-badge">Domein 4</div>
+    <div class="section-title">Organisatie & processen</div>
+    <div class="section-subtitle">Van triage tot ICT, kwaliteit tot veiligheid.</div>
+    <div class="card">
+      <div class="flow-step" data-step="1"><div class="card-title" style="margin-bottom:4px;">Stem: hoe werken wij eigenlijk?</div></div>
+      <div style="padding-left:40px;">
+        ${stelling('o-l1', 'Wij zijn een reactieve praktijk — we blussen brandjes in plaats van ze te voorkomen.')}
+        ${stelling('o-l2', 'Onze pragmatische aanpak werkt prima — we hoeven geen groot plan om goede zorg te leveren.')}
+        ${stelling('o-l3', 'We bezuinigen op plekken waar we eigenlijk zouden moeten investeren.')}
+        ${stelling('o-l4', 'Met slimmere IT-keuzes zouden we merkbaar meer tijd overhouden voor de patiënt.')}
+        ${stelling('o-l5', 'Er zit meer werkplezier in deze praktijk dan we er nu uithalen.')}
+        ${stelling('o-l6', 'Als we nu de juiste organisatorische keuzes maken, kunnen we over twee jaar een wezenlijk betere praktijk zijn.')}
+        ${stelling('o-l7', 'We zijn duurzaam, maar het mag geen geld kosten.')}
+        ${stelling('o-l8', 'Onze dagstructuur klopt.')}
+      </div>
+    </div>
+    <div class="card"><div class="card-title">📝 Spanningen & verbeterpunten</div>${stickyZone('org-spanningen-l', 'yellow')}</div>
+    <div class="card">
+      <div class="card-title">📌 Organisatieprincipes</div>
+      <div class="principle-split">
+        ${principleBox('org-org-l', 'Organisatieprincipe')}
+        ${principleBox('org-fin-l', 'Financieel principe')}
+      </div>
+    </div>
+    ${outcomeBox('Organisatie + financieel principe')}`
+},
+{
+  id:'medewerkers', icon:'👥', title:'Medewerkers', time:'14:15–14:45', minutes:30,
+  render: () => `
+    <div class="section-badge">Domein 5</div>
+    <div class="section-title">Medewerkers</div>
+    <div class="section-subtitle">Wat verwachten we van ons team — en wat bieden we terug?</div>
+    <div class="card"><div class="card-title">💬 Stickies</div>${stickyZone('mw-lang', 'green')}</div>
+    <div class="card">
+      <div class="card-title">📌 Werkgeversprincipes</div>
+      <div class="principle-split">
+        ${principleBox('mw-wg', 'Wij geven (werkgever investeert)')}
+        ${principleBox('mw-on', 'Wij verwachten (werknemer levert)')}
+      </div>
+    </div>
+    ${outcomeBox('Geven & krijgen — werkgeversprincipes')}`
+},
+{
+  id:'pauze', icon:'☕', title:'Pauze', time:'14:45–15:10', minutes:25,
+  render: () => `
+    <div class="section-badge">Pauze</div>
+    <div class="section-title">☕ Even opladen</div>
+    <div class="section-subtitle">We gaan verder om 15:10</div>`
+},
+{
+  id:'kansen', icon:'🔭', title:'Kansen & bedreigingen', time:'15:10–15:40', minutes:30,
+  render: () => `
+    <div class="section-badge">Domein 6</div>
+    <div class="section-title">Kansen & bedreigingen</div>
+    <div class="section-subtitle">Intern en extern — wat zien we aankomen?</div>
+    <div class="card">
+      <div class="card-title">🔍 Intern</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div><strong style="font-size:0.72rem;color:var(--green);">Kansen</strong>${stickyZone('k2-int-kansen', 'green')}</div>
+        <div><strong style="font-size:0.72rem;color:var(--red);">Bedreigingen</strong>${stickyZone('k2-int-bedreig', 'pink')}</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">🌍 Extern</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div><strong style="font-size:0.72rem;color:var(--green);">Kansen</strong>${stickyZone('k2-ext-kansen', 'green')}</div>
+        <div><strong style="font-size:0.72rem;color:var(--red);">Bedreigingen</strong>${stickyZone('k2-ext-bedreig', 'pink')}</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">📌 Principes</div>
+      <div class="principle-split">
+        ${principleBox('kb-int', 'Intern principe')}
+        ${principleBox('kb-ext', 'Extern principe')}
+      </div>
+    </div>
+    ${outcomeBox('Intern + extern principe')}`
+},
+{
+  id:'synthese', icon:'🎯', title:'Synthese', time:'15:40–16:25', minutes:45,
+  render: () => {
+    const t = state.texts || {};
+    function pc(key, label, cls) {
+      const val = t[key] || '';
+      return `<div class="synth-principle-card ${cls} ${val?'':'empty'}">
+        <div class="synth-principle-label">${label}</div>
+        <div class="synth-principle-text">${val || '<span class="synth-empty">nog niet ingevuld</span>'}</div>
+      </div>`;
+    }
+    const domains = `
+      <div class="synth-domain">
+        <div class="synth-domain-header"><div class="synth-domain-icon dom-org">⚙️</div><div class="synth-domain-name">Organisatie & processen</div></div>
+        <div class="synth-pair">${pc('principle-org-org-l','Organisatieprincipe','org')}${pc('principle-org-fin-l','Financieel principe','fin')}</div>
+      </div>
+      <div class="synth-domain">
+        <div class="synth-domain-header"><div class="synth-domain-icon dom-mw">👥</div><div class="synth-domain-name">Medewerkers</div></div>
+        <div class="synth-pair">${pc('principle-mw-wg','Wij geven','mw-wg')}${pc('principle-mw-on','Wij verwachten','mw-on')}</div>
+      </div>
+      <div class="synth-domain">
+        <div class="synth-domain-header"><div class="synth-domain-icon dom-kb">🔭</div><div class="synth-domain-name">Kansen & bedreigingen</div></div>
+        <div class="synth-pair">${pc('principle-kb-int','Intern principe','kb-int')}${pc('principle-kb-ext','Extern principe','kb-ext')}</div>
+      </div>
+      <div class="synth-domain">
+        <div class="synth-domain-header"><div class="synth-domain-icon dom-id">🧭</div><div class="synth-domain-name">Identiteit</div></div>
+        <div class="synth-pair">${pc('id-principle','Kernwaarden + missiezin','id')}</div>
+      </div>
+      <div class="synth-domain">
+        <div class="synth-domain-header"><div class="synth-domain-icon dom-pat">🤝</div><div class="synth-domain-name">Patiënten</div></div>
+        <div class="synth-pair">${pc('pat-principle','Patiëntprincipe(s)','pat')}</div>
+      </div>
+      <div class="synth-domain">
+        <div class="synth-domain-header"><div class="synth-domain-icon dom-zorg">🩺</div><div class="synth-domain-name">Zorginhoud</div></div>
+        <div class="synth-pair">${pc('zorg-principle','Zorginhoud-principes','zorg')}</div>
+      </div>`;
+    return `
+    <div class="section-badge">Kern van de dag</div>
+    <div class="section-title">Synthese</div>
+    <div class="card"><div class="card-title">📌 Principes overzicht</div>${domains}</div>
+    <div class="card"><div class="card-title">📝 Definitieve principes</div>
+      ${principleBox('synthese-principes', 'Definitieve principes')}</div>
+    <div class="card"><div class="card-title">📋 Taakverdeling</div>${stickyZone('synthese-taken', 'yellow')}</div>
+    <div class="card"><div class="card-title">🎯 SMART-actiepunten</div>
+      <table class="smart-table">
+        <tr><th>#</th><th>Actiepunt</th><th>Eigenaar</th><th>Deadline</th><th>Meting</th></tr>
+        ${[1,2,3,4,5,6,7,8].map(i=>`<tr><td>${i}</td><td>${syncInput('smart-actie-'+i,'...')}</td><td>${syncInput('smart-eig-'+i,'...')}</td><td>${syncInput('smart-dl-'+i,'...')}</td><td>${syncInput('smart-meet-'+i,'...')}</td></tr>`).join('')}
+      </table></div>
+    <div class="card"><div class="card-title">🔄 Evaluatie</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <div class="principle-box"><label>Datum evaluatie</label><input type="text" class="principle-input" style="min-height:28px;" data-sync="eval-datum" placeholder="bijv. 16 juni" readonly></div>
+        <div class="principle-box"><label>Bewaker</label><input type="text" class="principle-input" style="min-height:28px;" data-sync="eval-bewaker" placeholder="Naam..." readonly></div>
+      </div>
+    </div>
+    ${outcomeBox('6–8 principes + SMART-actiepunten + evaluatiedatum')}`;
+  }
+},
+{
+  id:'feedback', icon:'🔁', title:'Feedback', time:'16:25–16:40', minutes:15,
+  render: () => `
+    <div class="section-badge">Afronding</div>
+    <div class="section-title">Feedbackafspraken</div>
+    <div class="card">
+      <div class="card-title">📝 Afspraken</div>
+      ${stickyZone('feedback-afspraken', 'yellow')}
+      ${principleBox('feedback-principle', 'Feedbackafspraken (min. 2)')}
+    </div>`
+},
+{
+  id:'afsluiting', icon:'✨', title:'Afsluiting', time:'16:40–16:55', minutes:15,
+  render: () => `
+    <div class="section-badge">Afsluiting</div>
+    <div class="section-title">Check-out</div>
+    <div class="section-subtitle">Wat neem jij mee?</div>
+    <div class="card"><div class="card-title">🗣 Antwoorden</div>${stickyZone('checkout', 'yellow')}</div>`
+},
+{
+  id:'identiteit', icon:'🧭', title:'Identiteit', time:'optioneel', minutes:15,
+  render: () => `
+    <div class="section-badge" style="background:var(--yellow-light);color:var(--yellow);">Reserve-domein 1</div>
+    <div class="section-title">Identiteit</div>
+    <div class="section-subtitle">Wie zijn wij, wat maakt ons onderscheidend?</div>
+    <div class="card">
+      <div class="card-title">💬 Post-its</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <div><strong style="font-size:0.75rem;color:var(--text-secondary);">"Wij zijn een praktijk die..."</strong>${stickyZone('id-praktijk', 'green')}</div>
+        <div><strong style="font-size:0.75rem;color:var(--text-secondary);">"Onze rol in Utrecht is..."</strong>${stickyZone('id-rol', 'blue')}</div>
+      </div>
+    </div>
+    <div class="card">${principleBox('id-principle', '3–5 kernwaarden + missiezin')}</div>`
+},
+{
+  id:'patienten', icon:'🤝', title:'Patiënten', time:'optioneel', minutes:15,
+  render: () => `
+    <div class="section-badge" style="background:var(--yellow-light);color:var(--yellow);">Reserve-domein 2</div>
+    <div class="section-title">Patiënten</div>
+    <div class="section-subtitle">Hoe gaan we om met onze patiënten?</div>
+    <div class="card">
+      ${stelling('pat-s1', 'Wij zijn primair empowerend — we sturen op eigen regie.')}
+      ${stelling('pat-s2', 'Onze praktijk is voldoende toegankelijk voor kwetsbare en laaggeletterde patiënten.')}
+      ${stelling('pat-s3', 'We zeggen consequent nee als zorg niet bij ons hoort.')}
+      ${stelling('pat-s4', 'Patiënten weten wat ze van ons kunnen verwachten qua bereikbaarheid.')}
+    </div>
+    <div class="card">${principleBox('pat-principle', 'Patiëntprincipe(s)')}</div>`
+},
+{
+  id:'zorginhoud', icon:'🩺', title:'Zorginhoud', time:'optioneel', minutes:15,
+  render: () => `
+    <div class="section-badge" style="background:var(--yellow-light);color:var(--yellow);">Reserve-domein 3</div>
+    <div class="section-title">Zorginhoud — wat doen we wel, wat niet?</div>
+    <div class="section-subtitle">Er komt steeds meer zorg onze kant op. Hoe prioriteren we?</div>
+    <div class="card">
+      ${stelling('z-l1', 'Wij zeggen te vaak ja tegen zorg die eigenlijk niet bij ons hoort.')}
+      ${stelling('z-l2', 'Substitutie vanuit het ziekenhuis accepteren we te makkelijk.')}
+      ${stelling('z-l3', 'We moeten ruimte maken voor zorg die de POH/assistent leuk vindt.')}
+      ${stelling('z-l4', 'We hebben geen helder criterium om te bepalen of we iets wel of niet oppakken.')}
+      ${stelling('z-l5', 'Preventie klinkt mooi, maar we doen er in de praktijk te weinig mee.')}
+      ${stelling('z-l6', 'We zijn onderling niet eenduidig in wat we wel en niet doen.')}
+    </div>
+    <div class="card">
+      <div class="card-title">📋 Zorgportfolio</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div><strong style="font-size:0.72rem;color:var(--green);text-transform:uppercase;">✅ Kernzorg</strong>${stickyZone('z2-kern', 'green')}</div>
+        <div><strong style="font-size:0.72rem;color:var(--yellow);text-transform:uppercase;">⚠️ Ja, mits</strong>${stickyZone('z2-mits', 'yellow')}</div>
+        <div><strong style="font-size:0.72rem;color:var(--accent);text-transform:uppercase;">❤️ Omdat we het leuk vinden</strong>${stickyZone('z2-leuk', 'orange')}</div>
+        <div><strong style="font-size:0.72rem;color:var(--red);text-transform:uppercase;">🚫 Bewust niet</strong>${stickyZone('z2-niet', 'pink')}</div>
+      </div>
+    </div>
+    <div class="card">${principleBox('zorg-principle', 'Zorginhoud-principes')}</div>`
+}
+];
+
+// ===== RENDER =====
+function renderSidebar() {
+  document.getElementById('sidebar').innerHTML = sections.map((s, i) =>
+    `<div class="sidebar-item ${i===currentSection?'active':''}" onclick="goTo(${i})">
+      <div class="sidebar-icon">${s.icon}</div><div>${s.title}</div>
+      <div class="sidebar-time">${s.time}</div></div>`
+  ).join('');
+}
+
+function renderNavDots() {
+  document.getElementById('navDots').innerHTML = sections.map((_, i) =>
+    `<div class="nav-dot ${i===currentSection?'active':''}" onclick="goTo(${i})"></div>`
+  ).join('');
+}
+
+function renderSection(idx) {
+  currentSection = idx;
+  const s = sections[idx];
+  document.getElementById('content').innerHTML = s.render();
+  document.getElementById('content').scrollTop = 0;
+  document.getElementById('topbarSection').textContent = `${s.icon} ${s.title} — ${s.time}`;
+  document.getElementById('prevBtn').disabled = idx === 0;
+  document.getElementById('nextBtn').disabled = idx === sections.length-1;
+  document.getElementById('progressFill').style.width = `${(idx/(sections.length-1))*100}%`;
+  renderSidebar();
+  renderNavDots();
+  restoreAll();
+}
+
+function nav(dir) {
+  const n = currentSection + dir;
+  if (n >= 0 && n < sections.length) renderSection(n);
+}
+function goTo(idx) { renderSection(idx); }
+
+function restoreAll() {
+  for (const [sid] of Object.entries(state.votes || {})) updateVoteDisplay(sid);
+  for (const [zoneId, stickies] of Object.entries(state.stickies || {})) {
+    for (const [sId, data] of Object.entries(stickies)) addStickyToDOM(zoneId, sId, data);
+  }
+  for (const [id, value] of Object.entries(state.texts || {})) {
+    const el = document.querySelector(`[data-sync="${id}"]`);
+    if (el && el.value !== value) el.value = value;
+  }
+  updateParticipantDots();
+}
+
+function addStickyToDOM(zoneId, stickyId, data) {
+  const zone = document.getElementById(`zone-${zoneId}`);
+  if (!zone) return;
+  if (zone.querySelector(`[data-sticky-id="${stickyId}"]`)) return;
+  const note = document.createElement('div');
+  note.className = 'sticky-note';
+  note.dataset.stickyId = stickyId;
+  note.style.background = data.color;
+  note.innerHTML = `
+    <div class="sticky-author" style="color:${PARTICIPANTS[data.author]||'#666'}">${data.author||''}</div>
+    <textarea readonly>${data.text||''}</textarea>`;
+  zone.appendChild(note);
+}
+
+function switchSpoor(id, spoor, btn) {
+  document.getElementById(`spoor-${id}-kort`).classList.toggle('active', spoor==='kort');
+  document.getElementById(`spoor-${id}-uitgebreid`).classList.toggle('active', spoor==='uitgebreid');
+  btn.parentElement.querySelectorAll('.spoor-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// ===== SSE HANDLERS =====
+onStateChange = function(type, data) {
+  if (type === 'init') {
+    renderSection(currentSection);
+    return;
+  }
+  if (type === 'vote' || type === 'unvote') updateVoteDisplay(data.id);
+  if (type === 'sticky_add') addStickyToDOM(data.zone, data.id, data);
+  if (type === 'sticky_update') {
+    const el = document.querySelector(`[data-sticky-id="${data.id}"] textarea`);
+    if (el) el.value = data.text;
+  }
+  if (type === 'sticky_delete') {
+    const el = document.querySelector(`[data-sticky-id="${data.id}"]`);
+    if (el) el.remove();
+  }
+  if (type === 'text') {
+    const el = document.querySelector(`[data-sync="${data.id}"]`);
+    if (el) el.value = data.value;
+  }
+  if (type === 'join' || type === 'heartbeat') updateParticipantDots();
+};
+
+// Keyboard nav (local only, no server broadcast)
+document.addEventListener('keydown', e => {
+  if (e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA') return;
+  if (e.key==='ArrowRight') { e.preventDefault(); nav(1); }
+  if (e.key==='ArrowLeft') { e.preventDefault(); nav(-1); }
+});
+
+connectSSE();
+</script>
+</body>
+</html>
