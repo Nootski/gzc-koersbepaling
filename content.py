@@ -26,10 +26,6 @@ GROUND_RULES = [
         "description": "Elk domein sluit af met een tastbare uitkomst. Discussie stopt zodra we kunnen besluiten.",
     },
     {
-        "title": "Twee sporen per domein",
-        "description": "Kort (15 min) of uitgebreid (30 min). Bij tijdnood: altijd kort. Liever 6 domeinen kort dan 3 half.",
-    },
-    {
         "title": "Begin bij onszelf",
         "description": "De sessie opent met een persoonlijke check-in. Pas als iedereen gehoord is, bouwen we de koers op.",
     },
